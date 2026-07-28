@@ -367,7 +367,7 @@ class Conductor extends flixel.FlxBasic {
 
 		frameTime = prevTime = time = 0;
 		curStep = curBeat = curMeasure = 0;
-		curMeasureExact = curBeatExact = curMeasureExact = 0;
+		curStepExact = curBeatExact = curMeasureExact = 0;
 		stepLength = beatLength = measureLength = 0;
 		stepsPerBeat = beatsPerMeasure = 4;
 		initialBPM = currentBPM = _bpm = 100;
