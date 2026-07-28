@@ -45,6 +45,11 @@ typedef AnimationMapEntry = {
 
 class BaseSprite extends #if Animate_Atlas animate.FlxAnimate #else flixel.FlxSprite #end {
 	/**
+	 * If true, a *lot*, of automated shit won't work.
+	 */
+	public var debugMode:Bool = false;
+
+	/**
 	 * The list of mapped animations this sprite has.
 	 */
 	public var animations:Map<String, AnimationMapEntry> = new Map<String, AnimationMapEntry>();
@@ -59,7 +64,7 @@ class BaseSprite extends #if Animate_Atlas animate.FlxAnimate #else flixel.FlxSp
 	 * @param width The image grid width.
 	 * @param height The image gird height.
 	 * @param displayWarning If true, a warning message will appear.
-	 * @return The class itself.
+	 * @return The sprite itself.
 	 */
 	public function loadImage(path:ModPath, width:Int = 0, height:Int = 0, displayWarning:Bool = false):BaseSprite {
 		var _path:ModPath = Paths.image(path);
@@ -75,7 +80,7 @@ class BaseSprite extends #if Animate_Atlas animate.FlxAnimate #else flixel.FlxSp
 	 * @param path The mod path.
 	 * @param type The wanted texture type.
 	 * @param displayWarning If true, a warning message will appear.
-	 * @return The class itself.
+	 * @return The sprite itself.
 	 */
 	public function loadSheet(path:ModPath, type:TextureType = IsUnknown, displayWarning:Bool = false):BaseSprite {
 		var _path:ModPath = Paths.image(path);
@@ -101,7 +106,7 @@ class BaseSprite extends #if Animate_Atlas animate.FlxAnimate #else flixel.FlxSp
 	 * @param path The mod path.
 	 * @param settings The animate atlas settings.
 	 * @param displayWarning If true, a warning message will appear.
-	 * @return The class itself.
+	 * @return The sprite itself.
 	 */
 	public function loadAtlas(path:ModPath, ?settings:animate.FlxAnimateFrames.FlxAnimateSettings, displayWarning:Bool = false):BaseSprite {
 		var _atlas_path:ModPath = Paths.spritesheet(path, IsAnimateAtlas);
@@ -123,14 +128,14 @@ class BaseSprite extends #if Animate_Atlas animate.FlxAnimate #else flixel.FlxSp
 	 * @param path The mod path.
 	 * @param settings The animate atlas settings.
 	 * @param displayWarning If true, a warning message will appear.
-	 * @return The class itself.
+	 * @return The sprite itself.
 	 */
 	#else
 	/**
 	 * Loads a sheet or graphic for the sprite to use based on checks.
 	 * @param path The mod path.
 	 * @param displayWarning If true, a warning message will appear.
-	 * @return The class itself.
+	 * @return The sprite itself.
 	 */
 	#end
 	public function loadTexture(path:ModPath, #if Animate_Atlas ?settings:animate.FlxAnimateFrames.FlxAnimateSettings, #end displayWarning:Bool = false):BaseSprite {
@@ -228,14 +233,14 @@ class BaseSprite extends #if Animate_Atlas animate.FlxAnimate #else flixel.FlxSp
 	public function playAnimation(name:String, force:Bool = true, context:AnimationContext = Unclear, reverse:Bool = false, frame:Int = 0):Void {
 		var suffixes = name.trimSplit('-');
 		while (!suffixes.empty()) {
-			suffixes.pop();
-			var _name:String = suffixes.join('-');
+			var _name:String = suffixes.join('-'); suffixes.pop();
 			if (animation.exists(_name)) {
 				animation.play(_name, force, reverse, frame);
 				if (animations.exists(_name))
 					offset.copyFrom(animations.get(_name).offset);
 				break;
 			}
+			if (debugMode) break;
 		}
 		suffixes.resize(0);
 	}

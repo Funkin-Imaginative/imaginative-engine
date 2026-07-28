@@ -14,7 +14,7 @@ class ArrayUtil {
 	}
 
 	@:inheritDoc(haxe.ds.ArraySort.sort)
-	inline public static function arraySort<T>(array:Array<T>, method:(T, T)->Int):Void
+	inline public static function arraySort<T>(array:Array<T>, method:(T, T) -> Int):Void
 		haxe.ds.ArraySort.sort(array, method);
 
 	/**
@@ -23,7 +23,10 @@ class ArrayUtil {
 	 * @param b The second array.
 	 * @param clearB If true, it resizes array B to 0.
 	 */
-	inline public static function merge<T>(a:Array<T>, b:Array<T>, clearB:Bool = false):Void
+	inline public static function merge<T>(a:Array<T>, b:Array<T>, clearB:Bool = false):Void {
 		for (i in b)
 			a.push(i);
+		if (clearB)
+			b.resize(0);
+	}
 }

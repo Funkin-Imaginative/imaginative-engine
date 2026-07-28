@@ -5,7 +5,7 @@ using StringTools;
 
 typedef Command = {
 	var names:Array<String>;
-	var func:Array<String>->Void;
+	var func:Array<String> -> Void;
 	var ?description:String;
 	var ?elaboration:String;
 }

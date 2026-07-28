@@ -187,7 +187,7 @@ class Assets {
 		return asset;
 	}
 
-	static function _audio(path:ModPath, beepWhenNull:Bool, cacheType:CacheType, persistenceType:PersistenceType, displayWarning:Bool):Sound {
+	static function _audio(path:ModPath, beepWhenNull:Bool, streamIt:Bool, cacheType:CacheType, persistenceType:PersistenceType, displayWarning:Bool):Sound {
 		var finalPath:String = path.format();
 
 		if (!path.isFile) {
@@ -202,7 +202,7 @@ class Assets {
 		if (cacheType == CacheAsset && contentExists(finalPath))
 			return getContent(finalPath);
 
-		var asset:Sound = FlxG.assets.exists(finalPath, SOUND) ? FlxG.assets.getSound(finalPath) : Sound.fromFile(finalPath);
+		var asset:Sound = FlxG.assets.exists(finalPath, SOUND) ? (streamIt && FlxG.assets.canStreamSound(finalPath) ? FlxG.assets.streamSound(finalPath) : FlxG.assets.getSound(finalPath)) : Sound.fromFile(finalPath);
 		addContent(finalPath, asset, cacheType, persistenceType);
 		return asset;
 	}
@@ -210,13 +210,14 @@ class Assets {
 	 * Gets the data of an audio file.
 	 * @param path The mod path.
 	 * @param beepWhenNull If true, returns the flixel beep noise if the chosen sound doesn't exist.
+	 * @param streamIt If true, the audio will be streamed, recommended for music.
 	 * @param cacheType The cache type.
 	 * @param persistenceType The persistence level.
 	 * @param displayWarning If true, a warning message will appear.
 	 * @return The audio data.
 	 */
-	inline public static function audio(path:ModPath, beepWhenNull:Bool = true, cacheType:CacheType = CacheAsset, persistenceType:PersistenceType = IsVulnerable, displayWarning:Bool = false):Sound
-		return _audio(Paths.audio(path), beepWhenNull, cacheType, persistenceType, displayWarning);
+	inline public static function audio(path:ModPath, beepWhenNull:Bool = true, streamIt:Bool = false, cacheType:CacheType = CacheAsset, persistenceType:PersistenceType = IsVulnerable, displayWarning:Bool = false):Sound
+		return _audio(Paths.audio(path), beepWhenNull, streamIt, cacheType, persistenceType, displayWarning);
 
 	/**
 	 * Gets the data of an instrumental file from "`../data/songs/`".
@@ -227,7 +228,7 @@ class Assets {
 	 * @return The instrumental audio data.
 	 */
 	inline public static function inst(song:ModPath, ?variant:String, reloadCache:Bool = false, displayWarning:Bool = false):Sound
-		return _audio(Paths.inst(song, variant), true, reloadCache ? OverrideCache : CacheAsset, IsVulnerable, displayWarning);
+		return _audio(Paths.inst(song, variant), true, true, reloadCache ? OverrideCache : CacheAsset, IsVulnerable, displayWarning);
 	/**
 	 * Gets the data of a vocal file from "`../data/songs/`".
 	 * @param song The song id.
@@ -238,7 +239,7 @@ class Assets {
 	 * @return The vocal audio data.
 	 */
 	inline public static function vocal(song:ModPath, ?suffix:String, ?variant:String, reloadCache:Bool = false, displayWarning:Bool = false):Sound
-		return _audio(Paths.vocal(song, suffix, variant), false, reloadCache ? OverrideCache : CacheAsset, IsVulnerable, displayWarning);
+		return _audio(Paths.vocal(song, suffix, variant), false, true, reloadCache ? OverrideCache : CacheAsset, IsVulnerable, displayWarning);
 
 	/**
 	 * Gets the data of an audio file from "`../music`".
@@ -249,18 +250,19 @@ class Assets {
 	 * @return The music audio data.
 	 */
 	inline public static function music(path:ModPath, cacheType:CacheType = CacheAsset, persistenceType:PersistenceType = IsVulnerable, displayWarning:Bool = false):Sound
-		return _audio(Paths.music(path), true, cacheType, persistenceType, displayWarning);
+		return _audio(Paths.music(path), true, true, cacheType, persistenceType, displayWarning);
 	/**
 	 * Gets the data of an audio file from "`../sounds`".
 	 * @param path The mod path.
 	 * @param beepWhenNull If true, returns the flixel beep noise if the chosen sound doesn't exist.
+	 * @param streamIt If true, the audio will be streamed, recommended for music.
 	 * @param cacheType The cache type.
 	 * @param persistenceType The persistence level.
 	 * @param displayWarning If true, a warning message will appear.
 	 * @return The sound audio data.
 	 */
-	inline public static function sound(path:ModPath, beepWhenNull:Bool = true, cacheType:CacheType = CacheAsset, persistenceType:PersistenceType = IsVulnerable, displayWarning:Bool = false):Sound
-		return _audio(Paths.sound(path), beepWhenNull, cacheType, persistenceType, displayWarning);
+	inline public static function sound(path:ModPath, beepWhenNull:Bool = true, streamIt:Bool = false, cacheType:CacheType = CacheAsset, persistenceType:PersistenceType = IsVulnerable, displayWarning:Bool = false):Sound
+		return _audio(Paths.sound(path), beepWhenNull, streamIt, cacheType, persistenceType, displayWarning);
 
 	// im so funny uwu
 	#if Animate_Atlas

@@ -267,7 +267,7 @@ class Project extends HXProject {
 		if (scriptSupport.exists())
 			addHaxelib('compiletime');
 
-		// addHaxeMacro('imaginative.backend.macro.Macro.init()');
+		addHaxeMacro('imaginative.backend.macro.Macro.init()');
 		// if (canHaxeScript.exists()) setDefine('rulescript_abstracts_file_path', 'engine/modding/rulescript-abstracts.txt');
 
 		if (!isDebug()) setHaxedef('FLX_NO_DEBUG');

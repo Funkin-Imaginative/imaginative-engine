@@ -59,7 +59,7 @@ class Game extends openfl.display.Sprite {
 		#if !windows FlxG.stage.window.setIcon(lime.graphics.Image.fromFile('icon.png')); #end
 	}
 
-	public static function switchState(func:Void->imaginative.backend.states.GameState):Void {
+	public static function switchState(func:Void -> imaginative.backend.states.GameState):Void {
 		FlxG.switchState(func);
 	}
 
