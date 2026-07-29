@@ -1,5 +1,7 @@
 package imaginative.backend.utils;
 
+import flixel.util.FlxDestroyUtil;
+
 class ArrayUtil {
 	/**
 	 * Returns a clean displayed list for quickly tracing a list.
@@ -9,7 +11,7 @@ class ArrayUtil {
 	 */
 	inline public static function cleanDisplayList(array:Array<String>, clear:Bool = false):String {
 		var result = '${[for (i => item in array) (i == (array.length - 2) && !array.empty()) ? '"$item" and' : '"$item"'].join(', ').replace('and,', 'and')}';
-		if (clear) array.resize(0);
+		if (clear) array.clear();
 		return result;
 	}
 
@@ -27,6 +29,20 @@ class ArrayUtil {
 		for (i in b)
 			a.push(i);
 		if (clearB)
-			b.resize(0);
+			b.clear();
+	}
+
+	/**
+	 * Removes all elements from the array.
+	 * @param array The array.
+	 * @param destroyDestroyables If true, if an object implements IFlxDestroyable, it will be destroyed.
+	 */
+	inline public static function clear<T>(array:Array<T>, destroyDestroyables:Bool = false):Void {
+		while (!array.empty()) {
+			var item = array.pop();
+			if (destroyDestroyables && item is IFlxDestroyable)
+				FlxDestroyUtil.destroy(cast item);
+		}
+		array.resize(0);
 	}
 }

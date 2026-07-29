@@ -36,7 +36,7 @@ class Modding {
 			var asset:ModPath = new ModPath('modules/$mod/$modPath', ROOT);
 			if (asset.isFile) return asset.path;
 		}
-		mods.resize(0);
+		mods.clear();
 		return modPath;
 	}
 	#end

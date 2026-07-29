@@ -8,34 +8,34 @@ import imaginative.backend.data.TextureType;
  *
  * Idea from Codename Engine.
  */
-enum abstract AnimationContext(String) from String to String {
+enum abstract AnimationContext(String) {
 	/**
 	 * States that the sprite animation is related to dancing.
 	 */
-	var IsDancing;
+	var IsDancing = 'dancing';
 
 	/**
 	 * States that the sprite animation is related to singing.
 	 */
-	var IsSinging;
+	var IsSinging = 'singing';
 	/**
 	 * States that the sprite animation is related to missing a note.
 	 */
-	var HasMissed;
+	var HasMissed = 'missed';
 
 	/**
 	 * States that the sprite animation can't go back to dancing.
 	 */
-	var NoDancing;
+	var NoDancing = 'no-dancing';
 	/**
 	 * States that the sprite animation can't go back to singing.
 	 */
-	var NoSinging;
+	var NoSinging = 'no-singing';
 
 	/**
 	 * States that the sprite animation is unclear.
 	 */
-	var Unclear;
+	var Unclear = null;
 }
 
 typedef AnimationMapEntry = {
@@ -163,6 +163,11 @@ class BaseSprite extends #if Animate_Atlas animate.FlxAnimate #else flixel.FlxSp
 		super(x, y);
 		if (sprite != null)
 			loadTexture(sprite, true);
+
+		animation.onFinish.add(name -> {
+			if (animation.exists('$name-loop'))
+				playAnimation('$name-loop');
+		});
 	}
 
 	/**
@@ -223,6 +228,21 @@ class BaseSprite extends #if Animate_Atlas animate.FlxAnimate #else flixel.FlxSp
 	#end
 
 	/**
+	 * The general animation suffix.
+	 *
+	 * Note: Appends to the current animation name.
+	 */
+	public var animationSuffix(default, set):Null<String>;
+	inline function set_animationSuffix(?value:String):Null<String>
+		return animationSuffix = value.isBlank() ? null : value.trim();
+
+	function getSuffixViaContext(context:AnimationContext):Null<String> {
+		return switch (context) {
+			default: animationSuffix;
+		}
+	}
+
+	/**
 	 * Plays an animation.
 	 * @param name The animation name.
 	 * @param force If true, it forces the animation to play.
@@ -231,18 +251,20 @@ class BaseSprite extends #if Animate_Atlas animate.FlxAnimate #else flixel.FlxSp
 	 * @param frame The frame for the animation to start at.
 	 */
 	public function playAnimation(name:String, force:Bool = true, context:AnimationContext = Unclear, reverse:Bool = false, frame:Int = 0):Void {
-		var suffixes = name.trimSplit('-');
+		var suffixes:Array<String> = name.trimSplit('-');
+		var contextualSuffix:Null<String> = getSuffixViaContext(context);
+		if (!contextualSuffix.isBlank()) suffixes.push(contextualSuffix);
 		while (!suffixes.empty()) {
 			var _name:String = suffixes.join('-'); suffixes.pop();
 			if (animation.exists(_name)) {
 				animation.play(_name, force, reverse, frame);
-				if (animations.exists(_name))
-					offset.copyFrom(animations.get(_name).offset);
+				if (animations.exists(_name)) offset.copyFrom(animations.get(_name).offset);
+				animationContext = context;
 				break;
 			}
 			if (debugMode) break;
 		}
-		suffixes.resize(0);
+		suffixes.clear();
 	}
 
 	override function initVars():Void {

@@ -9,6 +9,7 @@ package imaginative.backend.states;
 	'stepLength', 'beatLength', 'measureLength'
 ], false)) */
 class GameState extends flixel.FlxSubState implements IConductorReactive {
+	@:noCompletion public var parentConductor(default, null):Conductor;
 	/**
 	 * The states conductor instance.
 	 */
@@ -19,6 +20,7 @@ class GameState extends flixel.FlxSubState implements IConductorReactive {
 
 	public function new() {
 		super();
+		persistentUpdate = true;
 	}
 
 	override function create():Void {
@@ -26,30 +28,34 @@ class GameState extends flixel.FlxSubState implements IConductorReactive {
 		Conductor.reactors.push(this);
 	}
 
-	function _stepHit(target:Conductor):Void {
-		stepHit(target.curStep, target);
-		forEachExists(member -> {
+	@:noCompletion function _stepHit(target:Conductor):Void {
+		stepHit(target.curStep, parentConductor = target);
+		forEach(member -> {
 			if (!(member is IConductorReactive)) return;
 			var reactor:IConductorReactive = cast member;
-			reactor._stepHit(target);
+			@:privateAccess reactor._stepHit(target);
 		}, true);
 	}
-	function _beatHit(target:Conductor):Void {
-		beatHit(target.curBeat, target);
-		forEachExists(member -> {
+	@:noCompletion function _beatHit(target:Conductor):Void {
+		beatHit(target.curBeat, parentConductor = target);
+		forEach(member -> {
 			if (!(member is IConductorReactive)) return;
 			var reactor:IConductorReactive = cast member;
-			reactor._beatHit(target);
+			@:privateAccess reactor._beatHit(target);
 		}, true);
 	}
-	function _measureHit(target:Conductor):Void {
-		measureHit(target.curMeasure, target);
-		forEachExists(member -> {
+	@:noCompletion function _measureHit(target:Conductor):Void {
+		measureHit(target.curMeasure, parentConductor = target);
+		forEach(member -> {
 			if (!(member is IConductorReactive)) return;
 			var reactor:IConductorReactive = cast member;
-			reactor._measureHit(target);
+			@:privateAccess reactor._measureHit(target);
 		}, true);
 	}
+
+	@:noCompletion function stepHit(step:Int, target:Conductor):Void {}
+	@:noCompletion function beatHit(beat:Int, target:Conductor):Void {}
+	@:noCompletion function measureHit(measure:Int, target:Conductor):Void {}
 
 	override function destroy():Void {
 		Conductor.reactors.remove(this);

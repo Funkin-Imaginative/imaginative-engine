@@ -246,17 +246,17 @@ abstract ModPath(String) {
 				if (parts[0].startsWith('[')) {
 					if (parts[0].endsWith(']')) {
 						var result:TModPath = {moduleId: null, type: parts[0].substr(1).substr(0, -1).trim().ifBlankReplace(ALL), path: FilePath.removeTrailingSlashes(parts[1])}
-						parts.resize(0);
+						parts.clear();
 						return result;
 					}
 					if (parts[1].endsWith(']')) {
 						var result:TModPath = {moduleId: parts[1].substr(0, -1).trim(), type: parts[0].substr(1).trim().ifBlankReplace(ALL), path: FilePath.removeTrailingSlashes(parts[2])}
-						parts.resize(0);
+						parts.clear();
 						return result;
 					}
 				}
 				var result:TModPath = {moduleId: null, type: parts[0].trim().ifBlankReplace(ALL), path: FilePath.removeTrailingSlashes(parts[1])}
-				parts.resize(0);
+				parts.clear();
 				return result;
 			} catch(error:haxe.Exception)
 				trace(error);

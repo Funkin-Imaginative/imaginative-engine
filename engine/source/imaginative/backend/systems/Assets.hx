@@ -89,7 +89,7 @@ class Assets {
 		inline function _readFolder(path:String, recursive:Bool):Array<String> {
 			var data = Paths.readFolder('root:$path', recursive);
 			var result:Array<String> = [for (lol in data) lol.format()];
-			data.resize(0);
+			data.clear();
 			return result;
 		}
 

@@ -20,7 +20,7 @@ abstract StringedArray(String) from String to String {
 	inline public function new(delimiter:String, ...list:String) {
 		var lol = list.toArray();
 		this = delimiter + lol.join(delimiter);
-		lol.resize(0);
+		lol.clear();
 	}
 
 	@:arrayAccess inline public function get(slot:Int):String
@@ -51,7 +51,7 @@ abstract StringedArray(String) from String to String {
 	@:from inline public static function fromArray(value:Array<Any>):StringedArray {
 		for (i in 0...value.length) value[i] ??= '';
 		var result = value.join('@');
-		value.resize(0); // ON PURPOSE
+		value.clear(); // ON PURPOSE
 		return '@' + result;
 	}
 	@:to inline public function toArray():Array<String>

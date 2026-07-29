@@ -27,7 +27,7 @@ class StringUtil {
 	 * @return The sliced string.
 	 */
 	public static function getSlice(string:String, delimiter:String, slice:Int):String {
-		if (delimiter.isBlank(false) || slice < 0) return '';
+		if (string.isBlank(false) || delimiter.isBlank(false) || slice < 0) return '';
 
 		var start = 0;
 		var count = 0;
@@ -46,7 +46,7 @@ class StringUtil {
 	 * @return The total amount of slices.
 	 */
 	public static function getSliceCount(string:String, delimiter:String):Int {
-		if (delimiter.isBlank(false) || string.isBlank(false)) return 0;
+		if (string.isBlank(false) || delimiter.isBlank(false)) return 0;
 
 		var start = 0;
 		var count = 1;

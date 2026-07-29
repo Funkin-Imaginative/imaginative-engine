@@ -8,24 +8,23 @@ import flixel.util.FlxSort;
 import imaginative.backend.states.GameState;
 
 @:allow(imaginative.backend.systems.Conductor)
-@:autoBuild(imaginative.backend.macro.ConductorReactiveMacro.build())
 interface IConductorReactive {
-	// private var _conductor_(default, null):Conductor;
+	var parentConductor(default, null):Conductor;
 
-	function _stepHit(target:Conductor):Void;
-	function _beatHit(target:Conductor):Void;
-	function _measureHit(target:Conductor):Void;
+	private function _stepHit(target:Conductor):Void;
+	private function _beatHit(target:Conductor):Void;
+	private function _measureHit(target:Conductor):Void;
 
-	function stepHit(step:Int, target:Conductor):Void;
-	function beatHit(beat:Int, target:Conductor):Void;
-	function measureHit(measure:Int, target:Conductor):Void;
+	@:noCompletion private function stepHit(step:Int, target:Conductor):Void;
+	@:noCompletion private function beatHit(beat:Int, target:Conductor):Void;
+	@:noCompletion private function measureHit(measure:Int, target:Conductor):Void;
 }
 
 typedef MusicMeta = {
 	/**
 	 * The song id / folder name.
 	 */
-	var ?id:ModPath;
+	var id:ModPath;
 	/**
 	 * The display name of the song.
 	 */
@@ -39,13 +38,13 @@ typedef MusicMeta = {
 	 */
 	var ?checkpoints:Array<CheckpointMeta>;
 	/**
-	 * The time the song should loop from **(in steps, milliseconds for now)**.
+	 * The time the song should loop from **(in steps)**.
 	 *
 	 * Note: Only works if the conductor has "canLoop" enabled.
 	 */
 	var ?loopPoint:Float;
 	/**
-	 * How long the song is **(in steps, milliseconds for now)**.
+	 * How long the song is **(in steps)**.
 	 */
 	var ?length:Float;
 }
@@ -143,7 +142,7 @@ class Conductor extends flixel.FlxBasic {
 	 */
 	public var canLoop:Bool;
 	/**
-	 * The time the song should loop from **(in steps, milliseconds for now)**.
+	 * The time the song should loop from **(in steps)**.
 	 *
 	 * Note: Only works if the conductor has "canLoop" enabled.
 	 */
@@ -189,7 +188,7 @@ class Conductor extends flixel.FlxBasic {
 	 */
 	public var frameTime(default, null):Float = 0;
 	/**
-	 * How long the song is **(in steps, milliseconds for now)**.
+	 * How long the song is **(in steps)**.
 	 */
 	public var endTime:Null<Float>;
 
@@ -197,13 +196,15 @@ class Conductor extends flixel.FlxBasic {
 	 * The length of the song **(in milliseconds)**.
 	 */
 	public var length(get, never):Float;
-	inline function get_length():Float
-		return endTime ?? longestAudio?.length ?? 0;
+	inline function get_length():Float {
+		if (endTime == null) return longestAudio?.length ?? 0;
+		return getTime(endTime, STEPS, MILLISECONDS);
+	}
 
 	/**
 	 * The metadata for the current song.
 	 */
-	public var metadata:MusicMeta = {name: 'No Metadata', composer: 'No Metadata'}
+	public var metadata:MusicMeta = {id: 'No Metadata', name: 'No Metadata', composer: 'No Metadata'}
 
 	final checkpoints:Array<CheckpointMeta> = [];
 
@@ -335,11 +336,8 @@ class Conductor extends flixel.FlxBasic {
 	/**
 	 * Resumes the conductor's audio.
 	 */
-	inline public function resume():Void {
-		group.resume();
-		playing = true;
-		resyncTracks(true);
-	}
+	inline public function resume():Void
+		play(time, volume);
 
 	/**
 	 * Stops the conductor's audio.
@@ -371,7 +369,7 @@ class Conductor extends flixel.FlxBasic {
 		stepLength = beatLength = measureLength = 0;
 		stepsPerBeat = beatsPerMeasure = 4;
 		initialBPM = currentBPM = _bpm = 100;
-		checkpoints.resize(0);
+		checkpoints.clear();
 	}
 
 	/**
@@ -447,8 +445,9 @@ class Conductor extends flixel.FlxBasic {
 
 	inline static function getMetadata(id:String, path:ModPath, cacheType:CacheType):MusicMeta {
 		var meta:MusicMeta = Assets.json(path, cacheType, true);
-		if (meta == null) return {name: 'Failed Parse', composer: 'Failed Parse'}
+		if (meta == null) return {id: 'Failed Parse', name: id, composer: 'Failed Parse'}
 		meta.id = new ModPath(id, path.type, path.moduleId);
+		meta.name.ifBlankReplace(id);
 		meta.composer ??= 'Unknown';
 		return meta;
 	}
@@ -460,7 +459,11 @@ class Conductor extends flixel.FlxBasic {
 			metadata.checkpoints[0].time = 0;
 			checkpoints.merge(metadata.checkpoints);
 		}
-		_bpm = initialBPM = checkpoints.empty() ? 100 : checkpoints[0].bpm;
+		if (checkpoints.empty()) {
+			trace('No checkpoints detected for "${metadata.name}", double check your shit.');
+			checkpoints.push(new CheckpointMeta(100));
+		}
+		_bpm = initialBPM = checkpoints[0].bpm;
 		onLoad.dispatch(metadata);
 	}
 
@@ -472,6 +475,7 @@ class Conductor extends flixel.FlxBasic {
 	public function resyncTracks(force:Bool = false):Void {
 		if (!playing) if (!force) return;
 		_printResyncMessage = false;
+		longestAudio ??= group.sounds[0] ?? null;
 		for (sound in group.sounds) {
 			// idea from psych
 			if (time > 0 && time < sound.length) {
@@ -481,13 +485,11 @@ class Conductor extends flixel.FlxBasic {
 				}
 			} else if (sound.playing)
 				sound.pause();
-			longestAudio ??= group.sounds[0];
 			if (longestAudio.length < sound.length)
 				longestAudio = sound;
 		}
 		if (_printResyncMessage)
 			trace(force ? 'Forced Conductor resync on "$id".' : 'Conductor "$id" resynced all tracks to it\'s time.');
-		endTime ??= longestAudio.length;
 	}
 	@:unreflective var longestAudio:FlxSound;
 
@@ -514,52 +516,46 @@ class Conductor extends flixel.FlxBasic {
 		var info = getInfoFromTime(time);
 		stepLength = info.stepLength;
 		curStepExact = info.curStepExact;
-		if (curStep != info.curStep)
-			for (i in curStep...info.curStep + 1) {
-				onStepHit.dispatch(curStep = i);
-				for (reactor in reactors)
-					switch (Type.typeof(reactor)) {
-						case TClass(FlxCamera):
-							if (FlxG.cameras.list.contains(cast reactor))
-								reactor._stepHit(this);
-						case TClass(GameState):
-							if (cast(reactor, GameState).conductor == this)
-								reactor._stepHit(this);
-						default: reactor._stepHit(this);
-					}
-			}
+		if (curStep != info.curStep) {
+			onStepHit.dispatch(curStep = info.curStep);
+			for (reactor in reactors)
+				if (reactor is FlxCamera) {
+					if (FlxG.cameras.list.contains(cast reactor))
+						reactor._stepHit(this);
+				} else if (reactor is GameState) {
+					var state:GameState = cast reactor;
+					if (state.conductor == this && (state.persistentUpdate || state.subState == null))
+						reactor._stepHit(this);
+				} else reactor._stepHit(this);
+		}
 		beatLength = info.beatLength;
 		curBeatExact = info.curBeatExact;
-		if (curBeat != info.curBeat)
-			for (i in curBeat...info.curBeat + 1) {
-				onBeatHit.dispatch(curBeat = i);
-				for (reactor in reactors)
-					switch (Type.typeof(reactor)) {
-						case TClass(FlxCamera):
-							if (FlxG.cameras.list.contains(cast reactor))
-								reactor._beatHit(this);
-						case TClass(GameState):
-							if (cast(reactor, GameState).conductor == this)
-								reactor._beatHit(this);
-						default: reactor._beatHit(this);
-					}
-			}
+		if (curBeat != info.curBeat) {
+			onBeatHit.dispatch(curBeat = info.curBeat);
+			for (reactor in reactors)
+				if (reactor is FlxCamera) {
+					if (FlxG.cameras.list.contains(cast reactor))
+						reactor._beatHit(this);
+				} else if (reactor is GameState) {
+					var state:GameState = cast reactor;
+					if (state.conductor == this && (state.persistentUpdate || state.subState == null))
+						reactor._beatHit(this);
+				} else reactor._beatHit(this);
+		}
 		measureLength = info.measureLength;
 		curMeasureExact = info.curMeasureExact;
-		if (curMeasure != info.curMeasure)
-			for (i in curMeasure...info.curMeasure + 1) {
-				onMeasureHit.dispatch(curMeasure = i);
-				for (reactor in reactors)
-					switch (Type.typeof(reactor)) {
-						case TClass(FlxCamera):
-							if (FlxG.cameras.list.contains(cast reactor))
-								reactor._measureHit(this);
-						case TClass(GameState):
-							if (cast(reactor, GameState).conductor == this)
-								reactor._measureHit(this);
-						default: reactor._measureHit(this);
-					}
-			}
+		if (curMeasure != info.curMeasure) {
+			onMeasureHit.dispatch(curMeasure = info.curMeasure);
+			for (reactor in reactors)
+				if (reactor is FlxCamera) {
+					if (FlxG.cameras.list.contains(cast reactor))
+						reactor._measureHit(this);
+				} else if (reactor is GameState) {
+					var state:GameState = cast reactor;
+					if (state.conductor == this && (state.persistentUpdate || state.subState == null))
+						reactor._measureHit(this);
+				} else reactor._measureHit(this);
+		}
 
 		if (_prev_checkpoint == null) onBPMChange.dispatch(_current_checkpoint);
 		else if (_prev_checkpoint.bpm != _current_checkpoint.bpm)
@@ -573,16 +569,51 @@ class Conductor extends flixel.FlxBasic {
 
 	@:unreflective inline function onConductorComplete():Void {
 		if (canLoop) {
-			play(loopTime, volume);
+			play(getTime(loopTime, STEPS, MILLISECONDS), volume);
 			trace('Conductor "$id" has looped.');
 		} else {
-			// pause();
+			pause();
 			trace('Conductor "$id" has finished playing.');
 		}
 	}
 
+	public function getTime(time:Float, from:BeatTimes, to:BeatTimes):Float {
+		if (from == to) throw '"from" and "to" must be different.';
+		return switch (from) {
+			case MILLISECONDS:
+				var info = getInfoFromTime(time);
+				switch (to) {
+					case MILLISECONDS: throw 'heheheha';
+					case STEPS: info.curStepExact;
+					case BEATS: info.curBeatExact;
+					case MEASURES: info.curMeasureExact;
+				}
+			case STEPS:
+				switch (to) {
+					case MILLISECONDS: getTime(time, BEATS, MILLISECONDS) / stepsPerBeat;
+					case STEPS: throw 'heheheha';
+					case BEATS: getTime(getTime(time, STEPS, MILLISECONDS), MILLISECONDS, BEATS);
+					case MEASURES: getTime(getTime(time, STEPS, MILLISECONDS), MILLISECONDS, MEASURES);
+				}
+			case BEATS:
+				switch (to) {
+					case MILLISECONDS: (time * 60000) / currentBPM;
+					case STEPS: getTime(getTime(time, BEATS, MILLISECONDS), MILLISECONDS, STEPS);
+					case BEATS: throw 'heheheha';
+					case MEASURES: getTime(getTime(time, BEATS, MILLISECONDS), MILLISECONDS, MEASURES);
+				}
+			case MEASURES:
+				switch (to) {
+					case MILLISECONDS: getTime(time, BEATS, MILLISECONDS) / beatsPerMeasure;
+					case STEPS: getTime(getTime(time, MEASURES, MILLISECONDS), MILLISECONDS, STEPS);
+					case BEATS: getTime(getTime(time, MEASURES, MILLISECONDS), MILLISECONDS, BEATS);
+					case MEASURES: throw 'heheheha';
+				}
+		}
+	}
+
 	/**
-	 * Gets checkpoint metadata from a specific song time **(in milliseconds).**
+	 * Gets checkpoint metadata from a specific song time **(in milliseconds)**.
 	 * @param time The song time.
 	 * @return The checkpoint metadata.
 	 */
@@ -596,35 +627,34 @@ class Conductor extends flixel.FlxBasic {
 		return change;
 	}
 	/**
-	 * Gets time related info from a specific song time  **(in milliseconds).**
+	 * Gets music beat information from a specific song time **(in milliseconds)**.
 	 * @param time The song time.
-	 * @return The time information.
+	 * @return The beat information.
 	 */
-	public function getInfoFromTime(time:Float):TimeInfo {
+	public function getInfoFromTime(time:Float):BeatInfo {
 		var checkpoint:CheckpointMeta = getCheckpointFromTime(time);
-		var beatLength:Float = 60 / checkpoint.bpm * 1000;
-		var stepLength:Float = beatLength / checkpoint.stepsPerBeat;
+		var beat_length:Float = 60 / checkpoint.bpm * 1000;
+		var step_length:Float = beat_length / checkpoint.stepsPerBeat;
 
-		var curStepExact = step_from_time(time) + ((time - checkpoint.time) / stepLength);
-		var curBeatExact = curStepExact / checkpoint.stepsPerBeat;
-		var curMeasureExact = curBeatExact / checkpoint.beatsPerMeasure;
+		var stepExact = step_from_time(time) + ((time - checkpoint.time) / step_length);
+		var beatExact = stepExact / checkpoint.stepsPerBeat;
+		var measureExact = beatExact / checkpoint.beatsPerMeasure;
 
 		return {
-			curStep: Math.floor(curStepExact),
-			curBeat: Math.floor(curBeatExact),
-			curMeasure: Math.floor(curMeasureExact),
+			curStep: Math.floor(stepExact),
+			curBeat: Math.floor(beatExact),
+			curMeasure: Math.floor(measureExact),
 
-			curStepExact: curStepExact,
-			curBeatExact: curBeatExact,
-			curMeasureExact: curMeasureExact,
+			curStepExact: stepExact,
+			curBeatExact: beatExact,
+			curMeasureExact: measureExact,
 
-			stepLength: stepLength,
-			beatLength: beatLength,
-			measureLength: beatLength * checkpoint.beatsPerMeasure
+			stepLength: step_length,
+			beatLength: beat_length,
+			measureLength: beat_length * checkpoint.beatsPerMeasure
 		}
 	}
 	@:unreflective inline function step_from_time(time:Float):Float {
-		if (checkpoints.empty()) return 0;
 		var step:Float = 0;
 		var trackedBpm = initialBPM;
 		var lastTime:Float = 0;
@@ -672,7 +702,24 @@ class Conductor extends flixel.FlxBasic {
 	}
 }
 
-typedef TimeInfo = {
+enum abstract BeatTimes(String) {
+	var MILLISECONDS = 'milliseconds';
+
+	var STEPS = 'steps';
+	var BEATS = 'beats';
+	var MEASURES = 'measures';
+
+	inline public function resolveForDancing():BeatTimes {
+		if (abstract == MILLISECONDS)
+			this = 'beats';
+		return abstract;
+	}
+}
+
+/**
+ * Music beat information.
+ */
+typedef BeatInfo = {
 	/**
 	 * The amount of steps into the song.
 	 */
