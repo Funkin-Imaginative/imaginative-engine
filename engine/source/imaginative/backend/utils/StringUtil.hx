@@ -58,6 +58,11 @@ class StringUtil {
 		return count;
 	}
 
+	inline public static function iterateSlices(string:String, delimiter:String):SliceIterator
+		return new SliceIterator(string, delimiter);
+	inline public static function iterateSlicesKV(string:String, delimiter:String):SliceKeyValueIterator
+		return new SliceKeyValueIterator(string, delimiter);
+
 	/**
 	 * Checks if a string is blank.
 	 * @param string The string.
@@ -147,8 +152,29 @@ class StringUtil {
 	inline public static function replace(string:String, sub:String, replacement:String):String
 		return StringTools.replace(string, sub, replacement);
 
-	inline public static function iterator(string:String):StringIterator
+	@:noCompletion inline public static function iterator(string:String):StringIterator
 		return new StringIterator(string);
-	inline public static function keyValueIterator(string:String):StringKeyValueIterator
+	@:noCompletion inline public static function keyValueIterator(string:String):StringKeyValueIterator
 		return new StringKeyValueIterator(string);
+}
+
+private class SliceIterator {
+	var offset:Int = 0;
+	var string:String; var delimiter:String;
+	inline public function new(string:String, delimiter:String) {
+		this.string = string;
+		this.delimiter = delimiter;
+	}
+	inline public function hasNext() return offset < string.getSliceCount(delimiter);
+	inline public function next() return string.getSlice(delimiter, offset++);
+}
+private class SliceKeyValueIterator {
+	var offset:Int = 0;
+	var string:String; var delimiter:String;
+	inline public function new(string:String, delimiter:String) {
+		this.string = string;
+		this.delimiter = delimiter;
+	}
+	inline public function hasNext() return offset < string.getSliceCount(delimiter);
+	inline public function next() return {key: offset, value: string.getSlice(delimiter, offset++)}
 }

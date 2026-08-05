@@ -1,11 +1,11 @@
 package imaginative.sprites;
 
-/* @:build(imaginative.backend.macro.ForwardMacro.buildList('conductor', [
+@:build(imaginative.backend.macro.ForwardMacro.buildList('parentConductor', [
 	'curStep', 'curBeat', 'curMeasure',
 	'curStepExact', 'curBeatExact', 'curMeasureExact',
 	'stepsPerBeat', 'beatsPerMeasure', 'stepsPerMeasure',
 	'stepLength', 'beatLength', 'measureLength'
-])) */
+]))
 class BeatSprite extends BaseSprite implements IConductorReactive {
 	/**
 	 * When the sprite should be dancing.
@@ -48,8 +48,8 @@ class BeatSprite extends BaseSprite implements IConductorReactive {
 		return this;
 	}
 
-	override function update(elapsed:Float):Void {
-		super.update(elapsed);
+	override function update(delta:Float):Void {
+		super.update(delta);
 		if (!debugMode && !preventDancing && animationContext != IsDancing)
 			if (parentConductor != null)
 				tryDance(switch (danceEvery) {
@@ -103,7 +103,7 @@ class BeatSprite extends BaseSprite implements IConductorReactive {
 		playAnimation('dance$danceTag', IsDancing);
 	}
 	@:unreflective final totalDanceSteps:Map<String, Int> = new Map<String, Int>();
-	@:unreflective inline function calculateDanceSteps(?suffix:String):Void {
+	extern inline function calculateDanceSteps(?suffix:String):Void {
 		totalDanceSteps.set(suffix, 0);
 		for (anim in @:privateAccess animation._animations)
 			if (anim.name.startsWith('dance') && (suffix.isBlank() || anim.name.endsWith(suffix)))
@@ -111,27 +111,27 @@ class BeatSprite extends BaseSprite implements IConductorReactive {
 	}
 
 	public var parentConductor(default, null):Conductor;
-	@:noCompletion function _stepHit(target:Conductor):Void {
+	function _stepHit(target:Conductor):Void {
 		stepHit(target.curStep, parentConductor = target);
 	}
-	@:noCompletion function _beatHit(target:Conductor):Void {
+	function _beatHit(target:Conductor):Void {
 		beatHit(target.curBeat, parentConductor = target);
 	}
-	@:noCompletion function _measureHit(target:Conductor):Void {
+	function _measureHit(target:Conductor):Void {
 		measureHit(target.curMeasure, parentConductor = target);
 	}
 
-	@:noCompletion function stepHit(step:Int, target:Conductor):Void
+	function stepHit(step:Int, target:Conductor):Void
 		if (danceEvery == STEPS)
 			_tryDance(step);
-	@:noCompletion function beatHit(beat:Int, target:Conductor):Void
+	function beatHit(beat:Int, target:Conductor):Void
 		if (danceEvery == BEATS)
 			_tryDance(beat);
-	@:noCompletion function measureHit(measure:Int, target:Conductor):Void
+	function measureHit(measure:Int, target:Conductor):Void
 		if (danceEvery == MEASURES)
 			_tryDance(measure);
 
-	@:unreflective inline function _tryDance(tick:Int):Void {
+	extern inline function _tryDance(tick:Int):Void {
 		if (!preventDancing && !(danceBeforeStart && tick < 0)) {
 			var danceSpeed:Int = Math.round(danceInterval * danceSpeedMult);
 			if (danceSpeed > 0 && tick % danceSpeed == 0) {

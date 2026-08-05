@@ -82,9 +82,11 @@ class Assets {
 		}
 	}
 
-	@:unreflective inline static function init():Void {
-		FlxG.bitmap.add(FlxG.assets.getBitmapData('flixel/images/logo/default.png'), 'FlixelLogo').persist = true;
-		FlxG.assets.getSound('flixel/sounds/beep.ogg', true);
+	static final fallbackImage:String = 'flixel/images/logo/default.png';
+	static final fallbackSound:String = 'flixel/sounds/beep.ogg';
+	extern inline static function init():Void {
+		FlxG.bitmap.add(FlxG.assets.getBitmapData(fallbackImage)).persist = true;
+		FlxG.assets.getSound(fallbackSound);
 
 		inline function _readFolder(path:String, recursive:Bool):Array<String> {
 			var data = Paths.readFolder('root:$path', recursive);
@@ -175,7 +177,7 @@ class Assets {
 		if (!_path.isFile) {
 			if (displayWarning)
 				trace('Image asset couldn\'t be found, falling back to the flixel logo. (path: "$finalPath")');
-			return FlxG.bitmap.get('FlixelLogo');
+			return FlxG.bitmap.get(fallbackImage);
 		}
 		if (cacheType == CacheAsset && contentExists(finalPath))
 			return getContent(finalPath);
@@ -194,7 +196,7 @@ class Assets {
 			if (beepWhenNull) {
 				if (displayWarning)
 					trace('Audio asset couldn\'t be found, falling back to the flixel beep sound. (path: "$finalPath")');
-				return FlxG.assets.getSound('flixel/sounds/beep.ogg', true);
+				return FlxG.assets.getSound(fallbackSound, true);
 			}
 			if (displayWarning)
 				trace('Audio asset couldn\'t be found. (path: "$finalPath")');

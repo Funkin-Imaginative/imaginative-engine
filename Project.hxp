@@ -169,7 +169,7 @@ class Project extends HXProject {
 		// modSupport.enable();
 		// scriptSupport.enable(); // commented out for now
 
-		usesAnimateAtlas.enable();
+		// usesAnimateAtlas.enable();
 
 		if (scriptSupport.exists()){
 			canHaxeScript.enable();

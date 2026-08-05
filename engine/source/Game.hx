@@ -1,4 +1,6 @@
 import haxe.macro.Compiler;
+import flixel.FlxState;
+import imaginative.backend.states.GameState;
 import thx.semver.Version;
 
 class Game extends openfl.display.Sprite {
@@ -59,8 +61,43 @@ class Game extends openfl.display.Sprite {
 		#if !windows FlxG.stage.window.setIcon(lime.graphics.Image.fromFile('icon.png')); #end
 	}
 
-	public static function switchState(func:Void -> imaginative.backend.states.GameState):Void {
-		FlxG.switchState(func);
+	public static var state(get, never):GameState;
+	inline static function get_state():GameState {
+		if (FlxG.state is GameState)
+			return cast FlxG.state;
+		return null;
+	}
+
+	public static function switchState(nextState:Void -> GameState):Void {
+		inline function stateCheck(oldState:FlxState, nextState:Void -> GameState):FlxState {
+			var newState:FlxState = nextState();
+			if (oldState is GameState && newState is GameState) {
+				var oldConductor:Conductor = cast(oldState, GameState).conductor;
+				if (oldConductor == Conductor.song || oldConductor == Conductor.charter)
+					oldConductor.pause();
+				else if (oldConductor != cast(newState, GameState).conductor)
+					oldConductor.stop();
+			} else if (oldState is GameState && !(newState is GameState)) {
+				var oldConductor:Conductor = cast(oldState, GameState).conductor;
+				if (oldConductor == Conductor.song || oldConductor == Conductor.charter)
+					oldConductor.pause();
+			}
+			return newState;
+		}
+
+		FlxG.switchState(() -> stateCheck(FlxG.state, nextState));
+	}
+	public static function resetState():Void {
+		if (FlxG.state is GameState) @:privateAccess {
+			state.onReset();
+			state.conductor.reset();
+			var sub:GameState = state.subState is GameState ? cast state.subState : null;
+			if (sub != null) {
+				sub.conductor.reset();
+				sub = sub.subState is GameState ? cast sub.subState : null;
+			}
+		}
+		FlxG.resetState();
 	}
 
 	inline public static function reload():Void {

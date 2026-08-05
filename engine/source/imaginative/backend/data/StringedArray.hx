@@ -63,14 +63,14 @@ abstract StringedArray(String) from String to String {
 		return [for (i in abstract) Std.parseFloat(i)];
 }
 
-final class StringedArrayIterator {
+private class StringedArrayIterator {
 	var offset:Int = 0;
 	var string:StringedArray;
 	inline public function new(string:StringedArray) this.string = string;
 	inline public function hasNext() return offset < string.length;
 	inline public function next() return string[offset++];
 }
-final class StringedArrayKeyValueIterator {
+private class StringedArrayKeyValueIterator {
 	var offset:Int = 0;
 	var string:StringedArray;
 	inline public function new(string:StringedArray) this.string = string;

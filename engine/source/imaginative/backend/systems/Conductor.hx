@@ -110,7 +110,7 @@ class Conductor extends flixel.FlxBasic {
 	 */
 	public static var charter(default, null):Conductor;
 
-	@:unreflective inline static function init():Void {
+	extern inline static function init():Void {
 		menu = new Conductor('Menu', true);
 		song = new Conductor('Song');
 		cutscene = new Conductor('Cutscene', true);
@@ -451,7 +451,7 @@ class Conductor extends flixel.FlxBasic {
 		meta.composer ??= 'Unknown';
 		return meta;
 	}
-	@:unreflective inline function _onLoad():Void {
+	extern inline function _onLoad():Void {
 		endTime = metadata.length;
 		loopTime = metadata.loopPoint;
 		if (metadata.checkpoints != null && !metadata.checkpoints.empty()) {
@@ -495,17 +495,17 @@ class Conductor extends flixel.FlxBasic {
 
 	var _prev_checkpoint:CheckpointMeta;
 	var _current_checkpoint:CheckpointMeta;
-	var processAnyway:Bool = false; var _elapsed:Float = 0;
-	override function update(elapsed:Float):Void {
-		super.update(elapsed);
+	var processAnyway:Bool = false; var _delta:Float = 0;
+	override function update(delta:Float):Void {
+		super.update(delta);
 		if (!playing) if (!processAnyway) return;
 
 		if (playing) {
 			// copied persnake's FlxRhythmConductor code, lol
 			final prevTime:Float = time;
-			time += elapsed * 1000;
-			frameTime = frameTime + elapsed * 1000;
-			_elapsed = time - prevTime;
+			time += delta * 1000;
+			frameTime = frameTime + delta * 1000;
+			_delta = time - prevTime;
 			resyncTracks();
 		}
 
@@ -517,44 +517,53 @@ class Conductor extends flixel.FlxBasic {
 		stepLength = info.stepLength;
 		curStepExact = info.curStepExact;
 		if (curStep != info.curStep) {
-			onStepHit.dispatch(curStep = info.curStep);
-			for (reactor in reactors)
-				if (reactor is FlxCamera) {
-					if (FlxG.cameras.list.contains(cast reactor))
-						reactor._stepHit(this);
-				} else if (reactor is GameState) {
-					var state:GameState = cast reactor;
-					if (state.conductor == this && (state.persistentUpdate || state.subState == null))
-						reactor._stepHit(this);
-				} else reactor._stepHit(this);
+			curStep = info.curStep;
+			if (playing) {
+				onStepHit.dispatch(curStep);
+				for (reactor in reactors)
+					if (reactor is FlxCamera) {
+						if (FlxG.cameras.list.contains(cast reactor))
+							reactor._stepHit(this);
+					} else if (reactor is GameState) {
+						var state:GameState = cast reactor;
+						if (state.conductor == this && (state.persistentUpdate || state.subState == null))
+							reactor._stepHit(this);
+					} else reactor._stepHit(this);
+			}
 		}
 		beatLength = info.beatLength;
 		curBeatExact = info.curBeatExact;
 		if (curBeat != info.curBeat) {
-			onBeatHit.dispatch(curBeat = info.curBeat);
-			for (reactor in reactors)
-				if (reactor is FlxCamera) {
-					if (FlxG.cameras.list.contains(cast reactor))
-						reactor._beatHit(this);
-				} else if (reactor is GameState) {
-					var state:GameState = cast reactor;
-					if (state.conductor == this && (state.persistentUpdate || state.subState == null))
-						reactor._beatHit(this);
-				} else reactor._beatHit(this);
+			curBeat = info.curBeat;
+			if (playing) {
+				onBeatHit.dispatch(curBeat);
+				for (reactor in reactors)
+					if (reactor is FlxCamera) {
+						if (FlxG.cameras.list.contains(cast reactor))
+							reactor._beatHit(this);
+					} else if (reactor is GameState) {
+						var state:GameState = cast reactor;
+						if (state.conductor == this && (state.persistentUpdate || state.subState == null))
+							reactor._beatHit(this);
+					} else reactor._beatHit(this);
+			}
 		}
 		measureLength = info.measureLength;
 		curMeasureExact = info.curMeasureExact;
 		if (curMeasure != info.curMeasure) {
-			onMeasureHit.dispatch(curMeasure = info.curMeasure);
-			for (reactor in reactors)
-				if (reactor is FlxCamera) {
-					if (FlxG.cameras.list.contains(cast reactor))
-						reactor._measureHit(this);
-				} else if (reactor is GameState) {
-					var state:GameState = cast reactor;
-					if (state.conductor == this && (state.persistentUpdate || state.subState == null))
-						reactor._measureHit(this);
-				} else reactor._measureHit(this);
+			curMeasure = info.curMeasure;
+			if (playing) {
+				onMeasureHit.dispatch(curMeasure);
+				for (reactor in reactors)
+					if (reactor is FlxCamera) {
+						if (FlxG.cameras.list.contains(cast reactor))
+							reactor._measureHit(this);
+					} else if (reactor is GameState) {
+						var state:GameState = cast reactor;
+						if (state.conductor == this && (state.persistentUpdate || state.subState == null))
+							reactor._measureHit(this);
+					} else reactor._measureHit(this);
+			}
 		}
 
 		if (_prev_checkpoint == null) onBPMChange.dispatch(_current_checkpoint);
@@ -567,7 +576,7 @@ class Conductor extends flixel.FlxBasic {
 	@:allow(imaginative.backend.states.GameState)
 	@:unreflective static final reactors:Array<IConductorReactive> = [];
 
-	@:unreflective inline function onConductorComplete():Void {
+	extern inline function onConductorComplete():Void {
 		if (canLoop) {
 			play(getTime(loopTime, STEPS, MILLISECONDS), volume);
 			trace('Conductor "$id" has looped.');
@@ -654,7 +663,7 @@ class Conductor extends flixel.FlxBasic {
 			measureLength: beat_length * checkpoint.beatsPerMeasure
 		}
 	}
-	@:unreflective inline function step_from_time(time:Float):Float {
+	extern inline function step_from_time(time:Float):Float {
 		var step:Float = 0;
 		var trackedBpm = initialBPM;
 		var lastTime:Float = 0;

@@ -15,6 +15,7 @@ import flixel.tweens.FlxTween;
 import flixel.util.FlxColor;
 
 /* Engine */
+import imaginative.backend.input.Controls;
 import imaginative.backend.systems.Assets;
 import imaginative.backend.systems.Conductor;
 import imaginative.backend.systems.Modding;
