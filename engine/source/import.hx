@@ -13,6 +13,7 @@ import flixel.FlxG;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxColor;
+import flixel.util.FlxTimer;
 
 /* Engine */
 import imaginative.backend.input.Controls;
@@ -24,5 +25,6 @@ import imaginative.sprites.BaseSprite;
 import imaginative.sprites.BeatSprite;
 
 using imaginative.backend.utils.ArrayUtil;
+using imaginative.backend.utils.MathUtil;
 using imaginative.backend.utils.StringUtil;
 #end

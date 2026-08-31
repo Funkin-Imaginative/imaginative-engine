@@ -16,6 +16,8 @@
 	},
 
 	"flixel-animate": {
+		"version": "git",
+		"url": "https://github.com/MaybeMaru/flixel-animate",
 		"dependencies": {},
 		"checks": { "optional": true }
 	},
@@ -28,7 +30,7 @@
 
 	"hxcpp": {
 		"version": "git",
-		"branch": "5932340d095a7eea8635fe4d1355f1c0efd0b3c2",
+		"branch": "0376e9b19af9a4d91f9d9afc131a358467856a10",
 		"url": "https://github.com/FunkinCrew/hxcpp"
 	},
 	"hxcpp-debug-server": {

@@ -58,7 +58,7 @@ class GameState extends FlxSubState implements IConductorReactive {
 	function preCreate():Void {
 		cameras = [stateCamera = new FlxCamera()];
 		FlxG.cameras.add(stateCamera);
-		stateCamera.bgColor = FlxColor.TRANSPARENT;
+		stateCamera.bgColor = isSubState ? FlxColor.TRANSPARENT : FlxColor.BLACK;
 	}
 	override function create():Void {
 		super.create();

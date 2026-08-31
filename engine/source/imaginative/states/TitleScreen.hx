@@ -15,6 +15,7 @@ typedef IntroTextData = {
 
 class TitleScreen extends GameState {
 	static var played_intro:Bool = false;
+	var transitioning:Bool = false;
 
 	var fnfLogo:BeatSprite;
 	var menuGraphic:BeatSprite;
@@ -47,7 +48,7 @@ class TitleScreen extends GameState {
 			conductor.fadeIn(4, 0.7);
 		}
 
-		fnfLogo = new BeatSprite(-10, 'menus/title/logoBumpin').setupDance(MEASURES);
+		fnfLogo = new BeatSprite(-10, 'menus/title/logoBumpin').setupDance(2);
 		fnfLogo.addAnimation('dance', 'logo bumpin');
 		fnfLogo.scale.scale(0.9);
 		add(fnfLogo);
@@ -92,8 +93,9 @@ class TitleScreen extends GameState {
 	override function update(delta:Float):Void {
 		super.update(delta);
 
-		if (Controls.global.accept) {
+		if (Controls.global.accept && !transitioning) {
 			if (played_intro) {
+				transitioning = true;
 				camera.flash(true);
 				beginText.playAnimation('enter');
 				FlxTween.tween(beginText, {alpha: 0}, 0.5, {ease: FlxEase.cubeIn, startDelay: 0.5});
@@ -114,9 +116,9 @@ class TitleScreen extends GameState {
 			else {
 				var data = introTextData.intro.find(data -> data.beat == tick);
 				if (data != null) {
-					introText.text = '';
 					var imageAsset:ModPath = data.image;
-					if (!data.text.isBlank()) {
+					if (data.text != null) {
+						introText.text = '';
 						for (i => text in data.text.iterateSlicesKV('\n')) {
 							if (text == '{INTRO_TEXT}')
 								introText.text += getIntroEntry()[i] + '\n';

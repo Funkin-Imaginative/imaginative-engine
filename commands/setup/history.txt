@@ -1,7 +1,7 @@
 haxelib install hxdiscord_rpc --skip-dependencies
 haxelib install moonchart
 haxelib install hxp
-haxelib git hxcpp https://github.com/FunkinCrew/hxcpp 5932340d095a7eea8635fe4d1355f1c0efd0b3c2
+haxelib git hxcpp https://github.com/FunkinCrew/hxcpp 0376e9b19af9a4d91f9d9afc131a358467856a10
 haxelib install hxWindowColorMode
 haxelib install compiletime
 haxelib git hxhardware https://github.com/Vortex2Oblivion/hxhardware main
@@ -14,4 +14,3 @@ haxelib install openfl
 haxelib install thx.semver
 haxelib git rulescript https://github.com/Kriptel/RuleScript dev
 haxelib install hxvlc 2.2.5 --skip-dependencies
-haxelib install flixel-animate --skip-dependencies

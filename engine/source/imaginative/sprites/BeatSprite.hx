@@ -11,8 +11,10 @@ class BeatSprite extends BaseSprite implements IConductorReactive {
 	 * When the sprite should be dancing.
 	 */
 	public var danceEvery(default, set):BeatTimes;
-	inline function set_danceEvery(value:BeatTimes):BeatTimes
-		return danceEvery = value.resolveForDancing();
+	inline function set_danceEvery(value:BeatTimes):BeatTimes {
+		if (value == MILLISECONDS) trace('"danceEvery" can\'t be in milliseconds!');
+		return danceEvery = value == MILLISECONDS ? BEATS : value;
+	}
 	/**
 	 * The amount many of "danceEvery" that must pass for the sprite to dance.
 	 */
@@ -38,8 +40,8 @@ class BeatSprite extends BaseSprite implements IConductorReactive {
 	 * @return The sprite itself.
 	 */
 	inline public function setupDance(every:BeatTimes = BEATS, ?interval:Int):BeatSprite {
-		danceEvery = every.resolveForDancing();
-		danceInterval = interval ?? switch (every) {
+		danceEvery = every;
+		danceInterval = interval ?? switch (danceEvery) {
 			case MILLISECONDS: throw 'How tf did you do this??';
 			case STEPS: 4;
 			case BEATS: 2;
@@ -69,7 +71,7 @@ class BeatSprite extends BaseSprite implements IConductorReactive {
 
 	override function getSuffixViaContext(context:AnimationContext):Null<String> {
 		return switch (context) {
-			case IsDancing: danceSuffix;
+			case IsDancing: danceSuffix.ifBlankReplace(animationSuffix);
 			default: super.getSuffixViaContext(context);
 		}
 	}

@@ -111,7 +111,7 @@ class Setup {
 			FileSystem.createDirectory('.haxelib');
 		Sys.println(Main.dashes);
 
-		Sys.command('haxelib install haxelib --global');
+		Sys.command('haxelib install haxelib --global --always');
 		Sys.command('haxelib fixrepo');
 		Sys.println(Main.dashes);
 		dependenciesCheck(data);

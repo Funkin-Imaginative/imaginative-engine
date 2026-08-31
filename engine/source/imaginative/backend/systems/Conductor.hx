@@ -717,12 +717,6 @@ enum abstract BeatTimes(String) {
 	var STEPS = 'steps';
 	var BEATS = 'beats';
 	var MEASURES = 'measures';
-
-	inline public function resolveForDancing():BeatTimes {
-		if (abstract == MILLISECONDS)
-			this = 'beats';
-		return abstract;
-	}
 }
 
 /**
