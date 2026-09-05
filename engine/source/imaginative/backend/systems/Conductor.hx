@@ -131,11 +131,11 @@ class Conductor extends flixel.FlxBasic {
 	/**
 	 * Dispatches whenever the song loops.
 	 */
-	public final onLoop:FlxTypedSignal<Void -> Void> = new FlxTypedSignal<Void -> Void>();
+	public final onLoop:FlxTypedSignal<() -> Void> = new FlxTypedSignal<() -> Void>();
 	/**
 	 * Dispatches whenever the song ends.
 	 */
-	public final onComplete:FlxTypedSignal<Void -> Void> = new FlxTypedSignal<Void -> Void>();
+	public final onComplete:FlxTypedSignal<() -> Void> = new FlxTypedSignal<() -> Void>();
 
 	/**
 	 * If true, when the audio ends, it will loop.
@@ -489,7 +489,7 @@ class Conductor extends flixel.FlxBasic {
 				longestAudio = sound;
 		}
 		if (_printResyncMessage)
-			trace(force ? 'Forced Conductor resync on "$id".' : 'Conductor "$id" resynced all tracks to it\'s time.');
+			trace(force ? 'Forced Conductor "$id" to resync.' : 'Conductor "$id" resynced all tracks to it\'s time.');
 	}
 	@:unreflective var longestAudio:FlxSound;
 

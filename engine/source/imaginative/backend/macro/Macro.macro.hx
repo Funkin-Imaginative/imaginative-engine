@@ -27,19 +27,10 @@ class Macro {
 	inline static macro function buildOntoFlxG():Array<Field> {
 		var classFields = Context.getBuildFields();
 		var tempClass = macro class TempClass {
-			/**
-			 * Represents the amount of time in seconds that passed since last frame.
-			 */
-			public static var delta(get, never):Float;
+			@:inheritDoc(FlxG.elapsed) public static var delta(get, never):Float;
 			inline static function get_delta():Float return elapsed;
 
-			/**
-			 * Useful when the timestep is NOT fixed (i.e. variable),
-			 * to prevent jerky movement or erratic behavior at very low fps.
-			 * Essentially locks the framerate to a minimum value - any slower and you'll get
-			 * slowdown instead of frameskip; default is 1/10th of a second.
-			 */
-			public static var maxDelta(get, never):Float;
+			@:inheritDoc(FlxG.maxElapsed) public static var maxDelta(get, never):Float;
 			inline static function get_maxDelta():Float return maxElapsed;
 		}
 		return classFields.concat(tempClass.fields);
@@ -54,13 +45,13 @@ class Macro {
 			public var extra(default, null):Map<String, Dynamic> = new Map<String, Dynamic>();
 		}
 
-		var onDestroyFunc = classFields.find(field -> field.name == 'new');
+		var onDestroyFunc = classFields.find(field -> field.name == 'destroy');
 		switch (onDestroyFunc.kind) {
 			case FFun(f):
 				var initExpr:Expr = f.expr;
 				f.expr = macro {
 					extra.clear();
-					extra = null;
+					// extra = null;
 					$initExpr;
 				}
 				onDestroyFunc.kind = FFun(f);
@@ -124,7 +115,7 @@ class Macro {
 			 *
 			 * @param   width    How wide the graphic should be.
 			 * @param   height   How high the graphic should be.
-			 * @param   fill     Wether it should fill to bounds.
+			 * @param   fill     Whether it should fill to bounds.
 			 * @param   maxScale The max possible scale.
 			 */
 			public function setGraphicScale(width:Float = 0, height:Float = 0, fill:Bool = true, maxScale:Float = 0):Void {
@@ -193,13 +184,24 @@ class Macro {
 				newConstructor.kind = FFun(f);
 			default:
 		}
-		var onDestroyFunc = classFields.find(field -> field.name == 'new');
+		var onPlayFunc = classFields.find(field -> field.name == 'play');
+		switch (onPlayFunc.kind) {
+			case FFun(f):
+				var initExpr:Expr = f.expr;
+				f.expr = macro {
+					$initExpr;
+					parent.onPlay.dispatch(name, Force, Reversed, curFrame);
+				}
+				onPlayFunc.kind = FFun(f);
+			default:
+		}
+		var onDestroyFunc = classFields.find(field -> field.name == 'destroy');
 		switch (onDestroyFunc.kind) {
 			case FFun(f):
 				var initExpr:Expr = f.expr;
 				f.expr = macro {
 					extra.clear();
-					extra = null;
+					// extra = null;
 					$initExpr;
 					offset.put();
 				}
@@ -212,7 +214,6 @@ class Macro {
 	inline static macro function buildOntoFlxAnimationController():Array<Field> {
 		var classFields = Context.getBuildFields();
 		var tempClass = macro class TempClass {
-
 			/**
 			 * The position offset for the animation.
 			 */
@@ -224,15 +225,27 @@ class Macro {
 			 * Extra data that can be stored.
 			 */
 			public var extra(default, null):Map<String, Dynamic> = new Map<String, Dynamic>();
+
+			/**
+			 * Dispatches each time the current animation is played.
+			 *
+			 * @param   animName     The name of the current animation
+			 * @param   forced       Whether the animation was forced to play
+			 * @param   reversed     Whether the animation was played in reverse
+			 * @param   frame        The current animation's frameIndex in the tile sheet
+			 * @since now
+			 */
+			public final onPlay = new FlxTypedSignal<(animName:String, forced:Bool, reversed:Bool, frame:Int) -> Void>();
 		}
 
-		var onDestroyFunc = classFields.find(field -> field.name == 'new');
+		var onDestroyFunc = classFields.find(field -> field.name == 'destroy');
 		switch (onDestroyFunc.kind) {
 			case FFun(f):
 				var initExpr:Expr = f.expr;
 				f.expr = macro {
 					extra.clear();
-					extra = null;
+					// extra = null;
+					FlxDestroyUtil.destroy(onPlay);
 					$initExpr;
 					_offset.put();
 				}

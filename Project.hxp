@@ -285,6 +285,8 @@ class Project extends HXProject {
 		if (isRelease() && !isDebug())
 			setHaxedef('analyzer-optimize');
 
+		if (isDebug())
+			setHaxedef('FLX_TRACK_POOLS');
 		if (isDebug() || useTracy.exists()) {
 			setHaxedef('HXCPP_CHECK_POINTER');
 			setHaxedef('HXCPP_STACK_LINE');

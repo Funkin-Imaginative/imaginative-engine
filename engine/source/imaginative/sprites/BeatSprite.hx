@@ -36,7 +36,7 @@ class BeatSprite extends BaseSprite implements IConductorReactive {
 	/**
 	 * Sets up how the sprite should dance.
 	 * @param every When the sprite should be dancing.
-	 * @param interval The amount many of "every" that must pass for the sprite to dance.
+	 * @param interval The amount many of "every" that must pass for the sprite to dance. If null, this defaults to **4**, **2** or **1**, depending on if "every" is **steps**, **beats** or **measures**, respectively.
 	 * @return The sprite itself.
 	 */
 	inline public function setupDance(every:BeatTimes = BEATS, ?interval:Int):BeatSprite {

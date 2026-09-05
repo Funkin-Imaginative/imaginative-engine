@@ -200,7 +200,7 @@ class BaseSprite extends #if Animate_Atlas animate.FlxAnimate #else flixel.FlxSp
 	 * Adds an animation from an animate atlas.
 	 * @param name The name of the animation.
 	 * @param tag The name of the animation internally.
-	 * @param label Wether the animation to add is from a labeled frame.
+	 * @param label Whether the animation to add is from a labeled frame.
 	 * @param indices Specific frames for the animation to use, *optional*.
 	 * @param offset The offset for the animation.
 	 * @param fps The framerate of the animation.

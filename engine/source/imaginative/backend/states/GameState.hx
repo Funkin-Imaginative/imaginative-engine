@@ -45,10 +45,7 @@ class GameState extends FlxSubState implements IConductorReactive {
 
 	public function new(?id:String, freezeParent:Bool = false) {
 		super();
-		this.id = id ?? {
-			var lol = Type.getClassName(Type.getClass(this));
-			lol.getSlice('.', lol.getSliceCount('.') - 1);
-		}
+		this.id = id ?? flixel.util.FlxStringUtil.getClassName(this, true);
 		persistentUpdate = true;
 		this.freezeParent = freezeParent;
 	}
@@ -61,6 +58,18 @@ class GameState extends FlxSubState implements IConductorReactive {
 		stateCamera.bgColor = isSubState ? FlxColor.TRANSPARENT : FlxColor.BLACK;
 	}
 	override function create():Void {
+		FlxG.watch.addFunction('State', () -> {
+			var lol = flixel.util.FlxStringUtil.getClassName(this, true);
+			if (id != lol) return '$id ($lol)';
+			return id;
+		});
+
+		FlxG.watch.addFunction('Conductor', () -> conductor.id);
+		FlxG.watch.addFunction('Song/Composer', () -> '${conductor.metadata.name} - ${conductor.metadata.composer}');
+		FlxG.watch.addFunction('Time/Length', () -> '${flixel.util.FlxStringUtil.formatTime(songTime / 1000)} / ${flixel.util.FlxStringUtil.formatTime(songLength / 1000, true)}');
+		FlxG.watch.addFunction('Bpm/Signature', () -> '$currentBPM - $beatsPerMeasure / $stepsPerBeat');
+		FlxG.watch.addFunction('Step/Beat/Measure', () -> '$curStep - $curBeat - $curMeasure');
+
 		super.create();
 		Conductor.reactors.push(this);
 		if (!isSubState) FlxG.signals.postStateSwitch.addOnce(createPost);
@@ -179,7 +188,7 @@ class GameState extends FlxSubState implements IConductorReactive {
 	function beatHit(beat:Int, target:Conductor):Void {}
 	function measureHit(measure:Int, target:Conductor):Void {}
 
-	override function startOutro(onOutroComplete:Void -> Void):Void {
+	override function startOutro(onOutroComplete:() -> Void):Void {
 		onOutroComplete();
 	}
 

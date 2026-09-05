@@ -68,8 +68,8 @@ class Game extends openfl.display.Sprite {
 		return null;
 	}
 
-	public static function switchState(nextState:Void -> GameState):Void {
-		inline function stateCheck(oldState:FlxState, nextState:Void -> GameState):FlxState {
+	public static function switchState(nextState:() -> GameState):Void {
+		inline function stateCheck(oldState:FlxState, nextState:() -> GameState):FlxState {
 			var newState:FlxState = nextState();
 			if (oldState is GameState && newState is GameState) {
 				var oldConductor:Conductor = cast(oldState, GameState).conductor;

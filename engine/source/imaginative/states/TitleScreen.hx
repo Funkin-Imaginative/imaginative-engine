@@ -48,7 +48,7 @@ class TitleScreen extends GameState {
 			conductor.fadeIn(4, 0.7);
 		}
 
-		fnfLogo = new BeatSprite(-10, 'menus/title/logoBumpin').setupDance(2);
+		fnfLogo = new BeatSprite(-10, 'menus/title/logoBumpin').setupDance();
 		fnfLogo.addAnimation('dance', 'logo bumpin');
 		fnfLogo.scale.scale(0.9);
 		add(fnfLogo);

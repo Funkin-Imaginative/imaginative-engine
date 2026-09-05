@@ -52,7 +52,7 @@ enum abstract ModType(String) {
 	 * @param incoming The incoming type.
 	 * @return If true, the incoming is the wanted type.
 	 */
-	inline public static function pathCheck(wanted:ModType, ?incoming:ModType):Bool {
+	public static function pathCheck(wanted:ModType, ?incoming:ModType):Bool {
 		return switch (wanted) {
 			#if Modding // remember Modding.masterIsFallback
 			case FALLBACK: incoming == null || incoming == FALLBACK || incoming == TOP || incoming == NORM || incoming == ALL;
@@ -63,7 +63,7 @@ enum abstract ModType(String) {
 		}
 	}
 
-	@:from inline public static function fromString(value:String):ModType {
+	@:from public static function fromString(value:String):ModType {
 		return switch (value.toLowerCase().trim()) {
 			// Base Paths
 			case 'root' | 'none': ROOT;
@@ -122,16 +122,15 @@ abstract ModPath(String) {
 	/**
 	 * If true, this is a folder.
 	 */
-	public var isDirectory(get, never):Bool;
-	inline function get_isDirectory():Bool
+	public var isFolder(get, never):Bool;
+	inline function get_isFolder():Bool
 		return Paths.folderExists(abstract);
 
 	/**
 	 * The module id. **Can be null.**
 	 */
 	public var moduleId(get, set):Null<String>;
-	inline function get_moduleId():Null<String>
-		return self.moduleId;
+	inline function get_moduleId():Null<String> return self.moduleId;
 	inline function set_moduleId(?value:String):Null<String> {
 		this = new ModPath(path, type, value);
 		return value;
@@ -141,8 +140,7 @@ abstract ModPath(String) {
 	 * The path type.
 	 */
 	public var type(get, set):ModType;
-	inline function get_type():ModType
-		return self.type;
+	inline function get_type():ModType return self.type;
 	inline function set_type(value:ModType):ModType {
 		this = new ModPath(path, value, moduleId);
 		return value;
@@ -151,8 +149,7 @@ abstract ModPath(String) {
 	 * The mod path.
 	 */
 	public var path(get, set):String;
-	inline function get_path():String
-		return FilePath.removeTrailingSlashes(self.path);
+	inline function get_path():String return FilePath.removeTrailingSlashes(self.path);
 	inline function set_path(value:String):String {
 		this = new ModPath(value, type, moduleId);
 		return value;
@@ -557,24 +554,26 @@ class Paths {
 	 * Reads a folder and returns it's paths.
 	 * @param path The folder mod path.
 	 * @param setExts Specified extensions, *optional*.
-	 * @param recursive If true, it can scan subfolders. *Ignores "setExts".*
-	 * @return The path data.
+	 * @param recursive If true, it can scan subfolders. **Ignores "setExts".**
+	 * @return The array of path data.
 	 */
 	public static function readFolder(path:ModPath, setExts:StringedArray = '', recursive:Bool = false):Array<FileModPath> {
 		var files:Array<FileModPath> = [];
-		if (path.isDirectory)
+		if (path.isFolder) {
 			for (item in FileSystem.readDirectory(path.format())) {
 				var data:FileModPath = new FileModPath(FilePath.addTrailingSlash(path.path) + item, path.type, path.moduleId);
 				if (setExts.length == 0 || setExts.contains(data.extension)) files.push(data);
-				if (recursive && data.toString().isDirectory) files.merge(readFolder(data.toString(), setExts, true), true);
+				if (recursive && data.toString().isFolder) files.merge(readFolder(data.toString(), setExts, true), true);
 			}
-		files.arraySort((a, b) -> {
-			var a = a.path.toLowerCase();
-			var b = b.path.toLowerCase();
-			if (a < b) return -1;
-			if (a > b) return 1;
-			return 0;
-		});
+			// sorts 'em alphabetically
+			files.arraySort((a, b) -> {
+				var a = a.path.toLowerCase();
+				var b = b.path.toLowerCase();
+				if (a < b) return -1;
+				if (a > b) return 1;
+				return 0;
+			});
+		} else trace('"${path.format()}" is not a folder.');
 		return files;
 	}
 
