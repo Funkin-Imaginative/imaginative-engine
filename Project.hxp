@@ -256,7 +256,7 @@ class Project extends HXProject {
 		// chart converter, make own?
 		addHaxelib('moonchart');
 
-		if (canHaxeScript.exists()) addHaxelib('rulescript', 'git');
+		if (canHaxeScript.exists()) addHaxelib('hxscript');
 		// if (canLuaScript.exists()) addHaxelib('linc_luajit', 'git');
 		if (discordRPC.exists()) addHaxelib('hxdiscord_rpc');
 		if (allowVideos.exists()) addHaxelib('hxvlc', 'git');
@@ -267,8 +267,8 @@ class Project extends HXProject {
 		if (scriptSupport.exists())
 			addHaxelib('compiletime');
 
+		setDefine('imaginative');
 		addHaxeMacro('imaginative.backend.macro.Macro.init()');
-		// if (canHaxeScript.exists()) setDefine('rulescript_abstracts_file_path', 'engine/modding/rulescript-abstracts.txt');
 
 		if (!isDebug()) setHaxedef('FLX_NO_DEBUG');
 		setHaxedef('FLX_NO_HEALTH');
@@ -280,8 +280,10 @@ class Project extends HXProject {
 		setHaxedef('message.log-format', 'pretty');
 		if (allowVideos.exists())
 			setHaxedef('HXVLC_NO_SHARE_DIRECTORY');
-		if (canHaxeScript.exists())
-			setHaxedef('hscriptPos');
+		if (canHaxeScript.exists()) {
+			if (isDebug()) setHaxedef('hxscript_verbose');
+			// setHaxedef('hxscript_cppia');
+		}
 		if (isRelease() && !isDebug())
 			setHaxedef('analyzer-optimize');
 
@@ -310,21 +312,21 @@ class Project extends HXProject {
 		}
 	}
 
-	inline public function isDesktop():Bool return hasDefine('desktop');
-	inline public function isMobile():Bool return hasDefine('mobile');
+	extern inline public function isDesktop():Bool return hasDefine('desktop');
+	extern inline public function isMobile():Bool return hasDefine('mobile');
 
-	inline public function is32Bit():Bool return architectures.contains(Architecture.X86);
-	inline public function is64Bit():Bool return architectures.contains(Architecture.X64);
+	extern inline public function is32Bit():Bool return architectures.contains(Architecture.X86);
+	extern inline public function is64Bit():Bool return architectures.contains(Architecture.X64);
 
-	inline public function isWindows():Bool return hasDefine('windows');
-	inline public function isMac():Bool return hasDefine('mac') || hasDefine('macos');
-	inline public function isLinux():Bool return hasDefine('linux');
+	extern inline public function isWindows():Bool return hasDefine('windows');
+	extern inline public function isMac():Bool return hasDefine('mac') || hasDefine('macos');
+	extern inline public function isLinux():Bool return hasDefine('linux');
 
-	inline public function isAndroid():Bool return targetFlags.exists('android');
-	inline public function isIOS():Bool return targetFlags.exists('ios');
+	extern inline public function isAndroid():Bool return targetFlags.exists('android');
+	extern inline public function isIOS():Bool return targetFlags.exists('ios');
 
-	inline public function isRelease():Bool return hasDefine('release');
-	inline public function isDebug():Bool return hasDefine('debug');
+	extern inline public function isRelease():Bool return hasDefine('release');
+	extern inline public function isDebug():Bool return hasDefine('debug');
 
 	/**
 	 * Sets a haxedef.
@@ -340,7 +342,7 @@ class Project extends HXProject {
 	 * @param name The haxedef key.
 	 * @return The value of the haxedef.
 	 */
-	inline public function getHaxedef(name:String):Null<Dynamic>
+	extern inline public function getHaxedef(name:String):Null<Dynamic>
 		return haxedefs.get(name);
 	/**
 	 * Unset a haxedef.
@@ -357,7 +359,7 @@ class Project extends HXProject {
 	 * @param name The haxedef key.
 	 * @return If true the define exists.
 	 */
-	inline public function hasHaxedef(name:String):Bool
+	extern inline public function hasHaxedef(name:String):Bool
 		return haxedefs.exists(name);
 
 	/**
@@ -376,7 +378,7 @@ class Project extends HXProject {
 	 * @param name The define key.
 	 * @return The value of the define.
 	 */
-	inline public function getDefine(name:String):Null<Dynamic>
+	extern inline public function getDefine(name:String):Null<Dynamic>
 		return defines.get(name);
 	/**
 	 * Unset a define.
@@ -395,7 +397,7 @@ class Project extends HXProject {
 	 * @param name The define key.
 	 * @return If true the define exists.
 	 */
-	inline public function hasDefine(name:String):Bool
+	extern inline public function hasDefine(name:String):Bool
 		return defines.exists(name);
 
 	/**
@@ -431,7 +433,7 @@ class Project extends HXProject {
 	 * Call a Haxe build macro.
 	 * @param value The macro.
 	 */
-	inline public function addHaxeMacro(value:String):Void
+	extern inline public function addHaxeMacro(value:String):Void
 		addHaxeFlag('--macro $value');
 
 	/**
@@ -439,7 +441,7 @@ class Project extends HXProject {
 	 * @param icon The path to the icon.
 	 * @param size The size of the icon, optional.
 	 */
-	inline public function addIcon(icon:String, size:Int = 0):Void
+	extern inline public function addIcon(icon:String, size:Int = 0):Void
 		icons.push(new Icon(icon, size));
 	/**
 	 * Add an asset to the game build.
@@ -529,25 +531,25 @@ class Project extends HXProject {
 	 * @param embed
 	 * @param preload
 	 */
-	inline public function addAssetLibrary(name:String, embed:Bool = false, preload:Bool = false):Void
+	extern inline public function addAssetLibrary(name:String, embed:Bool = false, preload:Bool = false):Void
 		libraries.push(new Library('', name, null, embed, preload, false, ''));
 
 	/**
 	 * Display an error message. This should stop the build process.
 	 */
-	inline public function error(message:String):Void
+	extern inline public function error(message:String):Void
 		Log.error('$message');
 
 	/**
 	 * Display an info message. This should not interfere with the build process.
 	 */
-	inline public function info(message:String):Void
+	extern inline public function info(message:String):Void
 		if (command != 'display')
-			Log.info('[INFO] $message');
+			Log.info('[INFO] ${message.replace('\n', ' ')}');
 }
 
 abstract LibraryVersion(String) from String to String {
-	@:from inline public static function fromArray(from:Array<Int>):LibraryVersion
+	@:from extern inline public static function fromArray(from:Array<Int>):LibraryVersion
 		return from.join(',');
 }
 
@@ -556,52 +558,52 @@ abstract LibraryVersion(String) from String to String {
  * Includes features such as automatic generation of compile defines.
  */
 abstract CompilerFlag(String) {
-	static var parentProject(default, null):Project;
+	static var parent(default, null):Project;
 	static var list:Array<String> = [];
 
-	public static function init(project:Project):Void {
-		parentProject = project;
+	extern inline public static function init(project:Project):Void {
+		CompilerFlag.parent = project;
 
 		for (tag in list) {
 			var flag:CompilerFlag = tag;
-			if (parentProject.hasDefine(tag) && !flag.exists())
+			if (parent.hasDefine(tag) && !flag.exists())
 				flag.enable();
 		}
 	}
 
-	inline public function new(input:String)
+	extern inline public function new(input:String)
 		if (!list.contains(this = input))
 			list.push(this);
 
-	@:from inline public static function fromString(input:String):CompilerFlag
+	@:from extern inline public static function fromString(input:String):CompilerFlag
 		return new CompilerFlag(input);
 
 	/**
 	 * Enable this compiler flag by setting the appropriate compile define.
 	 * @param value The flag value.
 	 */
-	inline public function enable(?value:String):Void
+	extern inline public function enable(?value:String):Void
 		if (!exists())
-			parentProject.setDefine(this, value);
+			parent.setDefine(this, value);
 	/**
 	 * Enable this compiler flag by setting the appropriate compile define.
 	 * @param value The flag value.
 	 */
-	inline public function softEnable(?value:String):Void
+	extern inline public function softEnable(?value:String):Void
 		if (!exists())
-			parentProject.setHaxedef(this, value);
+			parent.setHaxedef(this, value);
 	/**
 	 * Disable this compiler flag by removing the appropriate compile define.
 	 */
-	inline public function disable():Void
-		if (parentProject.hasDefine(this))
-			parentProject.unsetDefine(this);
+	extern inline public function disable():Void
+		if (parent.hasDefine(this))
+			parent.unsetDefine(this);
 		else if (exists()) // looks gross but makes sense
-			parentProject.unsetHaxedef(this);
+			parent.unsetHaxedef(this);
 
 	/**
 	 * Query if this compiler flag exists.
 	 */
-	inline public function exists():Bool
-		return parentProject.hasHaxedef(this);
+	extern inline public function exists():Bool
+		return parent.hasHaxedef(this);
 }

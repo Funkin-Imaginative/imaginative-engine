@@ -103,35 +103,35 @@ abstract ModPath(String) {
 	 * Util variable.
 	 */
 	var self(get, never):TModPath;
-	inline function get_self():TModPath
+	@:noCompletion inline function get_self():TModPath
 		return toTypedef();
 
 	/**
 	 * If true, this path exists.
 	 */
 	public var exists(get, never):Bool;
-	inline function get_exists():Bool
+	@:noCompletion inline function get_exists():Bool
 		return Paths.pathExists(abstract);
 
 	/**
 	 * If true, this is a file.
 	 */
 	public var isFile(get, never):Bool;
-	inline function get_isFile():Bool
+	@:noCompletion inline function get_isFile():Bool
 		return Paths.fileExists(abstract);
 	/**
 	 * If true, this is a folder.
 	 */
 	public var isFolder(get, never):Bool;
-	inline function get_isFolder():Bool
+	@:noCompletion inline function get_isFolder():Bool
 		return Paths.folderExists(abstract);
 
 	/**
 	 * The module id. **Can be null.**
 	 */
 	public var moduleId(get, set):Null<String>;
-	inline function get_moduleId():Null<String> return self.moduleId;
-	inline function set_moduleId(?value:String):Null<String> {
+	@:noCompletion inline function get_moduleId():Null<String> return self.moduleId;
+	@:noCompletion inline function set_moduleId(?value:String):Null<String> {
 		this = new ModPath(path, type, value);
 		return value;
 	}
@@ -140,8 +140,8 @@ abstract ModPath(String) {
 	 * The path type.
 	 */
 	public var type(get, set):ModType;
-	inline function get_type():ModType return self.type;
-	inline function set_type(value:ModType):ModType {
+	@:noCompletion inline function get_type():ModType return self.type;
+	@:noCompletion inline function set_type(value:ModType):ModType {
 		this = new ModPath(path, value, moduleId);
 		return value;
 	}
@@ -149,8 +149,8 @@ abstract ModPath(String) {
 	 * The mod path.
 	 */
 	public var path(get, set):String;
-	inline function get_path():String return FilePath.removeTrailingSlashes(self.path);
-	inline function set_path(value:String):String {
+	@:noCompletion inline function get_path():String return FilePath.removeTrailingSlashes(self.path);
+	@:noCompletion inline function set_path(value:String):String {
 		this = new ModPath(value, type, moduleId);
 		return value;
 	}
@@ -159,9 +159,9 @@ abstract ModPath(String) {
 	 * The file extension of the mod path. **Can be null.**
 	 */
 	public var extension(get, set):Null<String>;
-	inline function get_extension():Null<String>
+	@:noCompletion inline function get_extension():Null<String>
 		return FilePath.extension(path).ifBlankReplace();
-	inline function set_extension(?value:String):Null<String>
+	@:noCompletion inline function set_extension(?value:String):Null<String>
 		return path = '${FilePath.withoutExtension(path)}${value.isBlank() ? '' : '.$value'}';
 
 	/**
@@ -269,7 +269,7 @@ final class FileModPath {
 	 * The full path.
 	 */
 	public var path(get, never):String;
-	inline function get_path():String {
+	@:noCompletion inline function get_path():String {
 		return (directory.isBlank() ? '' : directory + (_path.backslash ? '\\' : '/')) + file + (extension.isBlank() ? '' : '.' + extension);
 	}
 
@@ -277,20 +277,20 @@ final class FileModPath {
 	 * The directory. **Can be null.**
 	 */
 	public var directory(get, set):Null<String>;
-	inline function get_directory():Null<String> return _path.dir;
-	inline function set_directory(?value:String):Null<String> return _path.dir = value;
+	@:noCompletion inline function get_directory():Null<String> return _path.dir;
+	@:noCompletion inline function set_directory(?value:String):Null<String> return _path.dir = value;
 	/**
 	 * The file name.
 	 */
 	public var file(get, set):String;
-	inline function get_file():String return _path.file;
-	inline function set_file(value:String):String return _path.file = value;
+	@:noCompletion inline function get_file():String return _path.file;
+	@:noCompletion inline function set_file(value:String):String return _path.file = value;
 	/**
 	 * The extension of the file. **Can be null.**
 	 */
 	public var extension(get, set):Null<String>;
-	inline function get_extension():Null<String> return _path.ext;
-	inline function set_extension(?value:String):Null<String> return _path.ext = value;
+	@:noCompletion inline function get_extension():Null<String> return _path.ext;
+	@:noCompletion inline function set_extension(?value:String):Null<String> return _path.ext = value;
 
 	/**
 	 * The mod type.
@@ -314,7 +314,7 @@ final class FileModPath {
 	 * Formats the info in the class into the final path.
 	 * @return The finalized path.
 	 */
-	inline public function format():ModPath return toString().format();
+	inline public function format():String return toString().format();
 	inline public function toString():ModPath return new ModPath(path, modType, moduleId);
 }
 /**

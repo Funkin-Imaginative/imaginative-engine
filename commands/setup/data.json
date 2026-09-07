@@ -22,10 +22,8 @@
 		"checks": { "optional": true }
 	},
 
-	"rulescript": {
-		"version": "git",
-		"branch": "dev",
-		"url": "https://github.com/Kriptel/RuleScript"
+	"hxscript": {
+		"checks": { "optional": true }
 	},
 
 	"hxcpp": {

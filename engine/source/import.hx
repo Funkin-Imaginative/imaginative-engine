@@ -17,6 +17,9 @@ import flixel.util.FlxTimer;
 
 /* Engine */
 import imaginative.backend.input.Controls;
+import imaginative.backend.scripting.Script;
+import imaginative.backend.scripting.ScriptGroup;
+import imaginative.backend.scripting.ScriptInstance;
 import imaginative.backend.systems.Assets;
 import imaginative.backend.systems.Conductor;
 import imaginative.backend.systems.Modding;

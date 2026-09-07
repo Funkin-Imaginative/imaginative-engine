@@ -5,7 +5,7 @@ class PlatformUtil {
 	 * Opens a URL in your browser.
 	 * @param url The url.
 	 */
-	public static function openURL(url:String):Void {
+	inline public static function openURL(url:String):Void {
 		#if linux // taken from cne
 		// generally `xdg-open` should work in every distro
 		var cmd = Sys.command('xdg-open', [url]);

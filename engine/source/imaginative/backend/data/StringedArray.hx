@@ -6,13 +6,13 @@ package imaginative.backend.data;
 abstract StringedArray(String) from String to String {
 	@:inheritDoc(Array.length)
 	public var length(get, never):Int;
-	inline function get_length():Int
+	@:noCompletion inline function get_length():Int
 		return Std.int(Math.max(0, this.getSliceCount(delimiter) - 1));
 
 	public var delimiter(get, set):String;
-	inline function get_delimiter():String
-		return this.charAt(0);
-	inline function set_delimiter(value:String):String {
+	@:noCompletion inline function get_delimiter():String return this.charAt(0);
+	@:noCompletion inline function set_delimiter(value:String):String {
+		if (value.length != 1) return delimiter;
 		this = this.replace(delimiter, value);
 		return value;
 	}
@@ -41,10 +41,10 @@ abstract StringedArray(String) from String to String {
 		return false;
 	}
 
-	inline public function iterator():StringedArrayIterator {
+	@:noCompletion inline public function iterator():StringedArrayIterator {
 		return new StringedArrayIterator(abstract);
 	}
-	inline public function keyValueIterator():StringedArrayKeyValueIterator {
+	@:noCompletion inline public function keyValueIterator():StringedArrayKeyValueIterator {
 		return new StringedArrayKeyValueIterator(abstract);
 	}
 

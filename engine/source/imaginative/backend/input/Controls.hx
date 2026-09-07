@@ -1,34 +1,59 @@
 package imaginative.backend.input;
 
 import flixel.input.keyboard.FlxKey;
+#if Scripting.Haxe import hxscript.proxy.ReflectProxy; #end
+
+typedef Key = Null<FlxKey>;
+@:forward(iterator, keyValueIterator)
+abstract KeyList(Array<Key>) from Array<Key> to Array<Key> {
+	inline public function set(list:KeyList):Void {
+		list.prune(key -> !(key == ANY || key == NONE || key == null));
+		if (list.empty()) trace('Cannot give an empty list. Check if your list contains invalid keys.');
+		else this.set(list);
+	}
+
+	inline public function add(key:Key):Void {
+		if (key == ANY || key == NONE || key == null)
+			trace('Cannot add "$key" to a KeyList.');
+		else if (!this.contains(key)) this.push(key);
+		else trace('Already contains "$key".');
+	}
+
+	@:inheritDoc(Array.copy) // ensures typing on clone
+	inline public function copy():KeyList
+		return this.copy();
+
+	inline public function clear():Void
+		this.clear();
+}
 
 typedef Bind = flixel.util.typeLimit.OneOfTwo<Binds, String>;
 enum abstract Binds(String) from String {
 	// UI
-	var UI_LEFT = 'ui_left';
-	var UI_DOWN = 'ui_down';
-	var UI_UP = 'ui_up';
-	var UI_RIGHT = 'ui_right';
+	@:inheritDoc(GlobalInput.uiLeft) var UI_LEFT = 'ui_left';
+	@:inheritDoc(GlobalInput.uiDown) var UI_DOWN = 'ui_down';
+	@:inheritDoc(GlobalInput.uiUp) var UI_UP = 'ui_up';
+	@:inheritDoc(GlobalInput.uiRight) var UI_RIGHT = 'ui_right';
 
 	// Actions
-	var ACCEPT = 'accept';
-	var BACK = 'back';
-	var PAUSE = 'pause';
-	var RESET = 'reset';
+	@:inheritDoc(GlobalInput.accept) var ACCEPT = 'accept';
+	@:inheritDoc(GlobalInput.back) var BACK = 'back';
+	@:inheritDoc(GlobalInput.pause) var PAUSE = 'pause';
+	@:inheritDoc(GlobalInput.reset) var RESET = 'reset';
 
 	// Volume
-	var VOLUME_UP = 'volume_up';
-	var VOLUME_DOWN = 'volume_down';
-	var VOLUME_MUTE = 'volume_mute';
+	@:inheritDoc(GlobalInput.volumeUp) var VOLUME_UP = 'volume_up';
+	@:inheritDoc(GlobalInput.volumeDown) var VOLUME_DOWN = 'volume_down';
+	@:inheritDoc(GlobalInput.volumeMute) var VOLUME_MUTE = 'volume_mute';
 
 	// Extras
-	var FULLSCREEN = 'fullscreen';
+	@:inheritDoc(GlobalInput.fullscreen) var FULLSCREEN = 'fullscreen';
 
 	// Debug
-	var BOTPLAY = 'botplay';
-	var RESET_STATE = 'reset_state';
-	var QUICK_STATE = 'quick_state';
-	var RELOAD_GAME = 'reload_game';
+	@:inheritDoc(GlobalInput.botplay) var BOTPLAY = 'botplay';
+	@:inheritDoc(GlobalInput.resetState) var RESET_STATE = 'reset_state';
+	@:inheritDoc(GlobalInput.quickState) var QUICK_STATE = 'quick_state';
+	@:inheritDoc(GlobalInput.reloadGame) var RELOAD_GAME = 'reload_game';
 }
 
 @:build(imaginative.backend.macro.ControlsMacro.build())
@@ -93,8 +118,8 @@ class PlayerInput extends UserInput {
 	 * @param count The lane amount.
 	 * @return Int
 	 */
-	public function noteFromEvent(key:FlxKey, ?count:Int):Int {
-		if (key == NONE) return -1;
+	public function noteFromEvent(key:Key, ?count:Int):Int {
+		if (key == null) return -1;
 		for (i in 0...(count ?? laneCount))
 			for (note in bindCheck('note_${count ?? laneCount}:$i'))
 				if (key == note)
@@ -134,9 +159,9 @@ class Controls {
 		player1.binds.set('note_4:2', [J, UP]);
 		player1.binds.set('note_4:3', [K, RIGHT]);
 
-		// FlxG.sound.volumeUpKeys = global.binds.get(VOLUME_UP);
-		// FlxG.sound.volumeDownKeys = global.binds.get(VOLUME_DOWN);
-		// FlxG.sound.muteKeys = global.binds.get(VOLUME_MUTE);
+		/* FlxG.sound.volumeUpKeys.set(global.binds.get(VOLUME_UP).copy());
+		FlxG.sound.volumeDownKeys.set(global.binds.get(VOLUME_DOWN).copy());
+		FlxG.sound.muteKeys.set(global.binds.get(VOLUME_MUTE).copy()); */
 	}
 
 	/**
@@ -159,14 +184,14 @@ class Controls {
 	public static final blank:PlayerInput = new PlayerInput('Input(Player: Blank)');
 }
 
-typedef InputList = Map<Bind, Array<FlxKey>>;
-abstract class UserInput extends flixel.FlxBasic {
+typedef InputList = Map<Bind, KeyList>;
+abstract class UserInput extends flixel.FlxBasic #if Scripting.Haxe.IGNORE implements ICustomReflection #end {
 	/**
 	 * The id of the input handler.
 	 *
 	 * Used for debugging.
 	 */
-	public var id:String;
+	public final id:String;
 
 	/**
 	 * The binds that are contained within this input handler.
@@ -195,7 +220,7 @@ abstract class UserInput extends flixel.FlxBasic {
 	inline public function released(bind:Bind):Bool
 		return FlxG.keys.anyJustReleased(bindCheck(bind));
 
-	extern inline function bindCheck(bind:Bind):Null<Array<FlxKey>> {
+	extern inline function bindCheck(bind:Bind):Null<KeyList> {
 		if (!active) return null;
 		if (binds.exists(bind)) return binds.get(bind);
 		trace('$id: Bind "$bind" not found.');
@@ -212,6 +237,7 @@ abstract class UserInput extends flixel.FlxBasic {
 		for (bind in binds)
 			bind.clear();
 		binds.clear();
+		trace('$id: Binds cleared.');
 	}
 
 	override function destroy():Void {
@@ -219,4 +245,36 @@ abstract class UserInput extends flixel.FlxBasic {
 		clearBinds();
 		super.destroy();
 	}
+
+	#if Scripting.Haxe.IGNORE // TODO: Use global scripting to allow users to do more advanced shit.
+	@:inheritDoc(ICustomReflection.reflectHasField)
+	@:noCompletion public function reflectHasField(field:String):Bool {
+		return Reflect.hasField(this, field);
+	}
+
+	@:inheritDoc(ICustomReflection.reflectGetField)
+	@:noCompletion public function reflectGetField(field:String):Dynamic {
+		return Reflect.field(this, field);
+	}
+
+	@:inheritDoc(ICustomReflection.reflectSetField)
+	@:noCompletion public function reflectSetField(field:String, value:Dynamic):Dynamic {
+		return Reflect.setField(this, field, value);
+	}
+
+	@:inheritDoc(ICustomReflection.reflectGetProperty)
+	@:noCompletion public function reflectGetProperty(property:String):Dynamic {
+		return Reflect.getProperty(this, property);
+	}
+
+	@:inheritDoc(ICustomReflection.reflectSetProperty)
+	@:noCompletion public function reflectSetProperty(property:String, value:Dynamic):Dynamic {
+		return Reflect.setProperty(this, property, value);
+	}
+
+	@:inheritDoc(ICustomReflection.reflectListFields)
+	@:noCompletion public function reflectListFields():Array<String> {
+		return Reflect.fields(this);
+	}
+	#end
 }

@@ -17,17 +17,11 @@ class MainMenu extends GameState {
 		},
 		{
 			id: 'options',
-			selectedFunc: () -> {
-				cast(Game.state, MainMenu).menuItems.setCooldown(0.4); // extend cooldown
-				Conductor.menu.fadeOut(0.4, _ -> Game.switchState(() -> new OptionsMenu()));
-			}
+			selectedFunc: null
 		},
 		{
 			id: 'credits',
-			selectedFunc: () -> {
-				cast(Game.state, MainMenu).menuItems.setCooldown(0.4); // extend cooldown
-				Conductor.menu.fadeOut(0.4, _ -> Game.switchState(() -> new CreditsMenu()));
-			}
+			selectedFunc: null
 		},
 		{
 			id: 'donate',
@@ -51,11 +45,20 @@ class MainMenu extends GameState {
 	@:unreflective var lowestY:Float = 0;
 
 	override function preCreate():Void {
+		itemData.find(data -> data.id == 'options').selectedFunc = () -> {
+			menuItems.setCooldown(0.5); // extend cooldown
+			conductor.fadeOut(0.4, _ -> Game.switchState(() -> new OptionsMenu(() -> Game.switchState(() -> new MainMenu()))));
+		}
+		itemData.find(data -> data.id == 'credits').selectedFunc = () -> {
+			menuItems.setCooldown(0.5); // extend cooldown
+			conductor.fadeOut(0.4, _ -> Game.switchState(() -> new CreditsMenu()));
+		}
 		super.preCreate();
+
 		var lePath = Paths.image('menus/main');
 		var lol = Paths.readFolder(lePath.applyExt(), new imaginative.backend.data.StringedArray(',', 'xml'));
 		for (file in lol)
-			itemList.push(file.file.getSlice('/', file.file.getSliceCount('/') - 1));
+			itemList.push(file.file.getSlice('/', -1));
 		itemList.sortByList(Assets.text(Paths.txt(lePath + 'order'), true).trimSplit('\n'));
 		lol.clear();
 	}

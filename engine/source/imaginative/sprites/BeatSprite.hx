@@ -11,7 +11,7 @@ class BeatSprite extends BaseSprite implements IConductorReactive {
 	 * When the sprite should be dancing.
 	 */
 	public var danceEvery(default, set):BeatTimes;
-	inline function set_danceEvery(value:BeatTimes):BeatTimes {
+	@:noCompletion inline function set_danceEvery(value:BeatTimes):BeatTimes {
 		if (value == MILLISECONDS) trace('"danceEvery" can\'t be in milliseconds!');
 		return danceEvery = value == MILLISECONDS ? BEATS : value;
 	}
@@ -66,7 +66,7 @@ class BeatSprite extends BaseSprite implements IConductorReactive {
 	 * The animation suffix for when dancing specially.
 	 */
 	public var danceSuffix(default, set):Null<String>;
-	inline function set_danceSuffix(?value:String):Null<String>
+	@:noCompletion inline function set_danceSuffix(?value:String):Null<String>
 		return danceSuffix = value.isBlank() ? null : value.trim();
 
 	override function getSuffixViaContext(context:AnimationContext):Null<String> {

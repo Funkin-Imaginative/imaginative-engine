@@ -20,7 +20,7 @@ class Modding {
 	 * If true, the current master mod is the engines fallback mod.
 	 */
 	public static var masterIsFallback(get, never):Bool;
-	inline static function get_masterIsFallback():Bool
+	@:noCompletion inline static function get_masterIsFallback():Bool
 		return masterMod == Game.fallbackMod;
 
 	/**

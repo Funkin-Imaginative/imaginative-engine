@@ -1,9 +1,9 @@
 package imaginative.states.menus;
 
 class OptionsMenu extends GameState {
-	public function new(?func:Void -> Void) {
+	public function new(func:Void -> Void) {
 		super();
-		exitMenu = func ?? () -> if (isSubState) close();
+		exitMenu = func;
 	}
 
 	/**

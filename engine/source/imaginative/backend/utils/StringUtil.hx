@@ -18,7 +18,6 @@ class StringUtil {
 		return daList;
 	}
 
-
 	/**
 	 * A port of Godot's "get_slice" function.
 	 * @param string The string.
@@ -27,7 +26,8 @@ class StringUtil {
 	 * @return The sliced string.
 	 */
 	public static function getSlice(string:String, delimiter:String, slice:Int):String {
-		if (string.isBlank(false) || delimiter.isBlank(false) || slice < 0) return '';
+		if (string.isBlank(false) || delimiter.isBlank(false)) return '';
+		slice = flixel.math.FlxMath.wrap(slice, 0, string.getSliceCount(delimiter) - 1);
 
 		var start = 0;
 		var count = 0;

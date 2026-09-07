@@ -22,16 +22,54 @@ class Macro {
 		Compiler.addMetadata('@:build($classPath.buildOntoFlxAnimationController())', 'flixel.animation.FlxAnimationController');
 
 		Compiler.include('moonchart', true, ['moonchart.backend.*']); // force include no matter what
+
+		#if Scripting.Haxe
+		hxscript.setup.Presets.custom.push({
+			define: 'imaginative',
+			title: 'imaginative',
+			roots: [
+				'imaginative',
+				'Game'
+			],
+			ignore: [
+				'imaginative.backend.macro',
+				'imaginative.backend.native'
+			],
+			types: [],
+			bases: [
+				'imaginative.backend.states.ScriptedState',
+				'imaginative.gameplay.hud.ScriptedHUD',
+				'imaginative.sprites',
+				'imaginative.ui.BaseBar'
+			],
+			abstractPackages: ['imaginative'],
+			abstracts: [],
+			abstractExclude: [],
+			globals: []
+		});
+		hxscript.setup.Presets.custom.push({
+			define: 'thx.semver',
+			title: 'thx.semver',
+			roots: ['thx.semver'],
+			ignore: [],
+			types: [],
+			bases: [],
+			abstractPackages: ['thx.semver'],
+			abstracts: [],
+			abstractExclude: [],
+			globals: []
+		});
+		#end
 	}
 
 	inline static macro function buildOntoFlxG():Array<Field> {
 		var classFields = Context.getBuildFields();
 		var tempClass = macro class TempClass {
 			@:inheritDoc(FlxG.elapsed) public static var delta(get, never):Float;
-			inline static function get_delta():Float return elapsed;
+			@:noCompletion inline static function get_delta():Float return elapsed;
 
 			@:inheritDoc(FlxG.maxElapsed) public static var maxDelta(get, never):Float;
-			inline static function get_maxDelta():Float return maxElapsed;
+			@:noCompletion inline static function get_maxDelta():Float return maxElapsed;
 		}
 		return classFields.concat(tempClass.fields);
 	}
@@ -152,7 +190,7 @@ class Macro {
 			/**
 			 * Iterates through every member and index.
 			 */
-			public inline function keyValueIterator() {
+			@:noCompletion inline function keyValueIterator() {
 				return members.keyValueIterator();
 			}
 		}

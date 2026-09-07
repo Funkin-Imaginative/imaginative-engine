@@ -64,7 +64,7 @@ class ControlsMacro {
 				// Context.info('function $getName() return $funcName("$value")', Context.currentPos());
 				var tempClass = macro class TempClass {
 					@:isVar public var $name(get, never):Bool;
-					inline function $getName():Bool
+					@:noCompletion inline function $getName():Bool
 						return $funcExpr($v{value});
 				}
 

@@ -62,7 +62,7 @@ class Game extends openfl.display.Sprite {
 	}
 
 	public static var state(get, never):GameState;
-	inline static function get_state():GameState {
+	@:noCompletion inline static function get_state():GameState {
 		if (FlxG.state is GameState)
 			return cast FlxG.state;
 		return null;

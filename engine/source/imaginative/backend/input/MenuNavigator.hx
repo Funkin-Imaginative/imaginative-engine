@@ -36,13 +36,13 @@ class MenuNavItem extends FlxSpriteGroup {
 	 * The index of this item.
 	 */
 	public var itemIndex(get, never):Int;
-	inline function get_itemIndex():Int
+	@:noCompletion inline function get_itemIndex():Int
 		return parent.members.indexOf(this);
 	/**
 	 * The grid index of this item.
 	 */
 	// public var gridIndex(get, never):FlxReadOnlyPoint;
-	// inline function get_gridIndex():FlxReadOnlyPoint return null;
+	// @:noCompletion inline function get_gridIndex():FlxReadOnlyPoint return null;
 
 	/**
 	 * If true, the item is locked and cannot be chosen.
@@ -50,7 +50,7 @@ class MenuNavItem extends FlxSpriteGroup {
 	 * __NOTE:__ This does not effect visuals. Override the "_isLocked" function for that, its dynamic for a reason.
 	 */
 	public var isLocked(default, set):Bool = false;
-	inline function set_isLocked(value:Bool):Bool {
+	@:noCompletion inline function set_isLocked(value:Bool):Bool {
 		_isLocked(isLocked = value);
 		return value;
 	}
@@ -68,7 +68,7 @@ class MenuNavItem extends FlxSpriteGroup {
 	 * __NOTE:__ This does not effect visuals. Override the "_canSelect" function for that, its dynamic for a reason.
 	 */
 	public var canSelect(default, set):Bool = true;
-	inline function set_canSelect(value:Bool):Bool {
+	@:noCompletion inline function set_canSelect(value:Bool):Bool {
 		_canSelect(canSelect = value);
 		return value;
 	}
@@ -197,7 +197,7 @@ class MenuNavigator extends BaseMenuNavigator {
 	 */
 	public var currentView:Float;
 
-	@:unreflective var _vertical:Bool;
+	@:noCompletion @:unreflective var _vertical:Bool;
 	public function new(verticalLayout:Bool = true, ?saveTag:String, forceVisualOntoCurrent:Bool = true, allowInput:Bool = true, allowCursor:Bool = true) {
 		super(saveTag, forceVisualOntoCurrent, allowInput, allowCursor);
 		_vertical = verticalLayout;

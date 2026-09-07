@@ -6,6 +6,10 @@ class LaunchScreen extends GameState {
 	@:unreflective static var game_boot:Bool = false;
 	static var splash_screen:Bool = false;
 
+	public function new() {
+		super(false);
+	}
+
 	override function create():Void {
 		if (!game_boot) @:privateAccess {
 			game_boot = true;
@@ -27,14 +31,14 @@ class LaunchScreen extends GameState {
 						case _class if (_class is Class):
 							// trace('class');
 							var lol = Type.getClassName(cast _class);
-							lol.getSlice('.', lol.getSliceCount('.') - 1);
+							lol.getSlice('.', -1);
 						case state if (state is GameState):
 							// trace('game');
 							cast(state, GameState).id;
 						case state if (state is flixel.FlxState):
 							// trace('base');
 							var lol = Type.getClassName(Type.getClass(state));
-							lol.getSlice('.', lol.getSliceCount('.') - 1);
+							lol.getSlice('.', -1);
 						case func if (Reflect.isFunction(func)):
 							// trace('func');
 							getName(cast func.getConstructor()());

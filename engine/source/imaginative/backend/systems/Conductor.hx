@@ -68,19 +68,19 @@ typedef RawCheckpointMeta = {
 	 * The time signature *numerator*.
 	 */
 	public var beatsPerMeasure(get, set):Int;
-	inline function get_beatsPerMeasure():Int return this.signature[0];
-	inline function set_beatsPerMeasure(value:Int):Int
+	@:noCompletion inline function get_beatsPerMeasure():Int return this.signature[0];
+	@:noCompletion inline function set_beatsPerMeasure(value:Int):Int
 		return this.signature[0] = value;
 	/**
 	 * The time signature *denominator*.
 	 */
 	public var stepsPerBeat(get, set):Int;
-	inline function get_stepsPerBeat():Int return this.signature[1];
-	inline function set_stepsPerBeat(value:Int):Int
+	@:noCompletion inline function get_stepsPerBeat():Int return this.signature[1];
+	@:noCompletion inline function set_stepsPerBeat(value:Int):Int
 		return this.signature[1] = value;
 
 	public var stepsPerMeasure(get, never):Int;
-	inline function get_stepsPerMeasure():Int
+	@:noCompletion inline function get_stepsPerMeasure():Int
 		return beatsPerMeasure * stepsPerBeat;
 
 	public function new(bpm:Float, time:Float = 0, ?signature:Array<Int>) {
@@ -159,20 +159,20 @@ class Conductor extends flixel.FlxBasic {
 	 * The volume of the conductor.
 	 */
 	public var volume(get, set):Float;
-	inline function get_volume():Float return group.volume;
-	inline function set_volume(value:Float):Float return group.volume = value;
+	@:noCompletion inline function get_volume():Float return group.volume;
+	@:noCompletion inline function set_volume(value:Float):Float return group.volume = value;
 	/**
 	 * Whether the conductor is muted or not.
 	 */
 	public var muted(get, set):Bool;
-	inline function get_muted():Bool return group.muted;
-	inline function set_muted(value:Bool):Bool return group.muted = value;
+	@:noCompletion inline function get_muted():Bool return group.muted;
+	@:noCompletion inline function set_muted(value:Bool):Bool return group.muted = value;
 
 	/**
 	 * How fast the song should play.
 	 */
 	public var rate(default, set):Float;
-	inline function set_rate(value:Float):Float {
+	@:noCompletion inline function set_rate(value:Float):Float {
 		for (sound in group.sounds)
 			sound.pitch = value;
 		return rate = value;
@@ -196,7 +196,7 @@ class Conductor extends flixel.FlxBasic {
 	 * The length of the song **(in milliseconds)**.
 	 */
 	public var length(get, never):Float;
-	inline function get_length():Float {
+	@:noCompletion inline function get_length():Float {
 		if (endTime == null) return longestAudio?.length ?? 0;
 		return getTime(endTime, STEPS, MILLISECONDS);
 	}
@@ -278,7 +278,7 @@ class Conductor extends flixel.FlxBasic {
 	 * The current amount of *steps-per-measure*.
 	 */
 	public var stepsPerMeasure(get, never):Int;
-	inline function get_stepsPerMeasure():Int
+	@:noCompletion inline function get_stepsPerMeasure():Int
 		return beatsPerMeasure * stepsPerBeat;
 
 	/**

@@ -228,7 +228,7 @@ class BaseSprite extends #if Animate_Atlas animate.FlxAnimate #else flixel.FlxSp
 	 * Note: Appends to the current animation name.
 	 */
 	public var animationSuffix(default, set):Null<String>;
-	inline function set_animationSuffix(?value:String):Null<String>
+	@:noCompletion inline function set_animationSuffix(?value:String):Null<String>
 		return animationSuffix = value.isBlank() ? null : value.trim();
 
 	function getSuffixViaContext(context:AnimationContext):Null<String> {
