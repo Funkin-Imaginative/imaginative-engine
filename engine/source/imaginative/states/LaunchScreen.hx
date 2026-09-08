@@ -21,6 +21,7 @@ class LaunchScreen extends GameState {
 			Assets.init();
 			// Settings.init();
 			Controls.init();
+			Script._init();
 
 			FlxG.fixedTimestep = false;
 			flixel.FlxSprite.defaultAntialiasing = true; // this ain't a pixel game... yeah ik week 6 exists!

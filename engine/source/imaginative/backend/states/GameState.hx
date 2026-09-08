@@ -28,7 +28,7 @@ class GameState extends FlxSubState implements IConductorReactive {
 	@:noCompletion public var parentConductor(default, null):Conductor;
 	@:noCompletion function get_conductor():Conductor return Conductor.menu;
 	@:noCompletion function set_conductor(value:Conductor):Conductor return get_conductor();
-	// is overrideable ^^
+	// is overrideable ^^^
 
 	/**
 	 * The parent of the state, ***if*** it's a substate, otherwise, this is null.
@@ -58,16 +58,17 @@ class GameState extends FlxSubState implements IConductorReactive {
 	function initScript():Void {
 		if (!allowScripts) return;
 		add(stateScripts = new ScriptGroup(this));
-		// TODO: actual add the scripts
+		stateScripts.add(Script.create('data/states/$id'));
+		stateScripts.init();
 	}
 
 	inline public function scriptCall<R>(callback:String, ?arguments:Array<Any>, ?def:ScriptRetCall<R>):Null<R> {
-		if (stateScripts != null)
+		if (allowScripts && stateScripts != null)
 			return stateScripts.call(callback, arguments, def);
 		return def.call(stateScripts);
 	}
 	inline public function eventCall<E>(callback:String, event:E, ?parentOverride:Any):E {
-		if (stateScripts != null)
+		if (allowScripts && stateScripts != null)
 			return stateScripts.event(callback, event, parentOverride);
 		return event;
 	}
@@ -84,7 +85,7 @@ class GameState extends FlxSubState implements IConductorReactive {
 		FlxG.watch.addFunction('State', () -> {
 			var lol = flixel.util.FlxStringUtil.getClassName(this, true);
 			var result = id != lol ? '$id ($lol)' : id;
-			#if Scripting.States result += ' (${allowScripts ? 'SCRIPT' : 'NO SCRIPTS'})'; #end
+			#if Scripting.States result += ' (${allowScripts ? 'SCRIPTABLE' : 'NO SCRIPTING'})'; #end
 			return result;
 		});
 

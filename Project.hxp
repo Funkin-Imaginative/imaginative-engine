@@ -167,11 +167,11 @@ class Project extends HXProject {
 		if (isRelease() && !isDebug())
 			checkForUpdates.enable();
 		// modSupport.enable();
-		// scriptSupport.enable(); // commented out for now
+		scriptSupport.enable(); // commented out for now
 
 		// usesAnimateAtlas.enable();
 
-		if (scriptSupport.exists()){
+		if (scriptSupport.exists()) {
 			canHaxeScript.enable();
 			// canLuaScript.enable();
 
@@ -267,8 +267,8 @@ class Project extends HXProject {
 		if (scriptSupport.exists())
 			addHaxelib('compiletime');
 
-		setDefine('imaginative');
 		addHaxeMacro('imaginative.backend.macro.Macro.init()');
+		setDefine('imaginative');
 
 		if (!isDebug()) setHaxedef('FLX_NO_DEBUG');
 		setHaxedef('FLX_NO_HEALTH');
@@ -282,7 +282,47 @@ class Project extends HXProject {
 			setHaxedef('HXVLC_NO_SHARE_DIRECTORY');
 		if (canHaxeScript.exists()) {
 			if (isDebug()) setHaxedef('hxscript_verbose');
-			// setHaxedef('hxscript_cppia');
+			else setHaxedef('hxscript_no_banner');
+			// setHaxedef('hxscript_host', 'imaginative,Game');
+			// setHaxedef('hxscript_bridge_all');
+			setHaxedef('hxscript_cppia');
+			setHaxedef('scriptable');
+
+			/* addHaxeMacro("hxscript.setup.Presets.custom.push({
+				define: 'imaginative',
+				title: 'imaginative',
+				roots: [
+					'imaginative',
+					'Game'
+				],
+				ignore: [
+					'imaginative.backend.macro',
+					'imaginative.backend.native'
+				],
+				types: [],
+				bases: [
+					'imaginative.backend.states.ScriptedState',
+					'imaginative.gameplay.hud.ScriptedHUD',
+					'imaginative.sprites',
+					'imaginative.ui.BaseBar'
+				],
+				abstractPackages: ['imaginative'],
+				abstracts: [],
+				abstractExclude: [],
+				globals: []
+			})");
+			addHaxeMacro("hxscript.setup.Presets.custom.push({
+				define: 'thx.semver',
+				title: 'thx.semver',
+				roots: ['thx.semver'],
+				ignore: [],
+				types: [],
+				bases: [],
+				abstractPackages: ['thx.semver'],
+				abstracts: [],
+				abstractExclude: [],
+				globals: []
+			})"); */
 		}
 		if (isRelease() && !isDebug())
 			setHaxedef('analyzer-optimize');
@@ -545,7 +585,7 @@ class Project extends HXProject {
 	 */
 	extern inline public function info(message:String):Void
 		if (command != 'display')
-			Log.info('[INFO] ${message.replace('\n', ' ')}');
+			Log.info('[INFO] ${message.replace('\n', '')}');
 }
 
 abstract LibraryVersion(String) from String to String {

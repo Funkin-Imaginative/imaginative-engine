@@ -111,6 +111,7 @@ class Conductor extends flixel.FlxBasic {
 	public static var charter(default, null):Conductor;
 
 	extern inline static function init():Void {
+		trace('Initializing Conductor');
 		menu = new Conductor('Menu', true);
 		song = new Conductor('Song');
 		cutscene = new Conductor('Cutscene', true);

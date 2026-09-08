@@ -24,7 +24,7 @@ class Macro {
 		Compiler.include('moonchart', true, ['moonchart.backend.*']); // force include no matter what
 
 		#if Scripting.Haxe
-		hxscript.setup.Presets.custom.push({
+		/* hxscript.setup.Presets.custom.push({
 			define: 'imaginative',
 			title: 'imaginative',
 			roots: [
@@ -58,7 +58,8 @@ class Macro {
 			abstracts: [],
 			abstractExclude: [],
 			globals: []
-		});
+		}); */
+		// trace([for (lib in hxscript.setup.Presets.active()) lib.title]);
 		#end
 	}
 

@@ -132,6 +132,7 @@ class PlayerInput extends UserInput {
 class Controls {
 	extern inline static function init():Void {
 		// TODO: Save data junk.
+		trace('Initializing Controls');
 
 		global.binds.set(UI_LEFT, [A, LEFT]);
 		global.binds.set(UI_DOWN, [S, DOWN]);

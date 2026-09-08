@@ -3,7 +3,9 @@
 desktop.ini
 RECOVER_*.fla
 vscode-project.hxml
+export_classes.info
 commands/compile/platform.txt
+
 # easy shortcut to where flixel outputs the engines save data
 .saves.lnk
 

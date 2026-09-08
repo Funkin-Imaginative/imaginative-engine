@@ -551,6 +551,20 @@ class Paths {
 	}
 
 	/**
+	 * Applies the extension of a script file.
+	 * @param path The mod path.
+	 * @param type The script type, just in case you wanna be specific about coding language.
+	 * @return The desired file type.
+	 */
+	inline public static function script(path:ModPath, type:ScriptType = TypeUnknown):ModPath {
+		return file(path, switch (type) {
+			#if Scripting.Haxe case TypeHaxe: imaginative.backend.scripting.types.HaxeScript.exts; #end
+			#if Scripting.Lua case TypeLua: imaginative.backend.scripting.types.LuaScript.exts; #end
+			default: Script.exts;
+		});
+	}
+
+	/**
 	 * Reads a folder and returns it's paths.
 	 * @param path The folder mod path.
 	 * @param setExts Specified extensions, *optional*.

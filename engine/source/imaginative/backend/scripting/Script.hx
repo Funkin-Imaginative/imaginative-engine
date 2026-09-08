@@ -43,6 +43,14 @@ enum abstract ScriptType(String) {
  * The base script class.
  */
 class Script extends flixel.FlxBasic {
+	extern inline static function _init():Void {
+		trace('Initializing Scripting');
+		#if Scripting.Haxe HaxeScript._init(); #end
+		#if Scripting.Lua LuaScript._init(); #end
+	}
+
+	public static final exts:imaginative.backend.data.StringedArray = #if Scripting.Haxe HaxeScript.exts + #end #if Scripting.Lua LuaScript.exts + #end '';
+
 	public var priorityIndex:Int = 1000;
 
 	/**
@@ -60,29 +68,50 @@ class Script extends flixel.FlxBasic {
 	@:noCompletion function set_parent(value:Dynamic):Dynamic return null;
 
 	/**
-	 * Allows you to create a script instance from raw code.
-	 * @param code
-	 * @param language
-	 * @param onCreate
-	 * @param onLoad
-	 * @return The script instance.
+	 * Creates a script from a file.
+	 * @param path The mod path.
+	 * @param type The script type, just in case you wanna be specific about coding language.
+	 * @return The script.
 	 */
-	public static function createFromString<S:Script>(code:String, language:ScriptType, onCreate:S -> Void, onLoad:S -> Void):S {
+	public static function create(path:ModPath, type:ScriptType = TypeUnknown):Script {
+		#if Scripting.Haxe
+		if (type == TypeUnknown || type == TypeHaxe)
+			return new HaxeScript(Paths.script(path, TypeHaxe));
+		#end
+		#if Scripting.Lua
+		if (type == TypeUnknown || type == TypeLua)
+			return new LuaScript(Paths.script(path, TypeLua));
+		#end
+		return new Script(Paths.script(path, type));
+	}
+
+	/**
+	 * Allows you to create a script instance from raw code.
+	 * @param code The code for the script to contain.
+	 * @param language The language the script should use.
+	 * @param onCreate Called before the script is initialized.
+	 * @param onLoad Called after the script is initialized.
+	 * @return The script.
+	 */
+	public static function createFromString(code:String, language:ScriptType, onCreate:Script -> Void, onLoad:Script -> Void):Script {
 		if (!language.isLang) throw 'Invalid type detected. ($language)';
-		final script:S = cast switch (language) {
+		final script:Script = switch (language) {
 			#if Scripting.Haxe case TypeHaxe: new HaxeScript(null, code); #end
 			#if Scripting.Lua case TypeLua: new LuaScript(null, code); #end
 			default: new Script(null, code);
 		}
+		onCreate(script);
+		script.init();
+		onLoad(script);
 		return script;
 	}
 
-	public final filePath:FileModPath;
+	public final filePath:FileModPath; // TODO: Have this just be a string maybe?
 	/**
 	 * @param filePath The path to the script file.
 	 * @param rawCode The raw code, mainly used for the "createFromString" function.
 	 */
-	public function new(filePath:ModPath, ?rawCode:String) {
+	function new(filePath:ModPath, ?rawCode:String) {
 		super();
 		this.filePath = FileModPath.fromModPath(filePath);
 		setup();

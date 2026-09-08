@@ -6,7 +6,10 @@
 	},
 
 	"hxWindowColorMode": {
-		"checks": { "target": "windows" }
+		"checks": {
+			"target": "windows",
+			"optional": true
+		}
 	},
 
 	"flixel-addons": {
@@ -22,9 +25,7 @@
 		"checks": { "optional": true }
 	},
 
-	"hxscript": {
-		"checks": { "optional": true }
-	},
+	"hxscript": { "checks": { "optional": true } },
 
 	"hxcpp": {
 		"version": "git",
@@ -39,15 +40,19 @@
 		"checks": { "debug": true }
 	},
 
-	"hxdiscord_rpc": { "dependencies": {} },
+	"hxdiscord_rpc": {
+		"dependencies": {},
+		"checks": { "optional": true }
+	},
 	"hxp": {},
 
 	"hxvlc": {
 		"version": "2.2.5",
-		"dependencies": {}
+		"dependencies": {},
+		"checks": { "optional": true }
 	},
 
 	"moonchart": {},
 	"thx.semver": {},
-	"compiletime": {}
+	"compiletime": { "checks": { "optional": true } }
 }

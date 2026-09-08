@@ -85,6 +85,7 @@ class Assets {
 	static final fallbackImage:String = 'flixel/images/logo/default.png';
 	static final fallbackSound:String = 'flixel/sounds/beep.ogg';
 	extern inline static function init():Void {
+		trace('Initializing Assets');
 		FlxG.bitmap.add(FlxG.assets.getBitmapData(fallbackImage)).persist = true;
 		FlxG.assets.getSound(fallbackSound);
 

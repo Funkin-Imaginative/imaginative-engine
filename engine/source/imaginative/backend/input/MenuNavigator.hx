@@ -306,10 +306,9 @@ class MenuNavigator extends BaseMenuNavigator {
 		}
 
 		if ((allowInput && Controls.global.accept) || (allowCursor && FlxG.mouse.justPressed && (currentValue == -1 ? true : overlapsCheck(members[currentValue])))) {
-			if (currentView != currentValue) {
+			if (currentView != currentValue)
 				currentView = currentValue;
-				FlxG.sound.play(Assets.sound('menus/scroll', true, false, true), 0.7);
-			} else selectCurrent();
+			else selectCurrent();
 		}
 
 		if (forceVisualOntoCurrent && _forceVisualOntoCurrent && currentValue != -1)
