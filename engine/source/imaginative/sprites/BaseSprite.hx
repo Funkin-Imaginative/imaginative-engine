@@ -174,7 +174,7 @@ class BaseSprite extends #if Animate_Atlas animate.FlxAnimate #else flixel.FlxSp
 	 * @param flipY If true, the animation will flipped on the Y axis.
 	 */
 	public function addAnimation(name:String, tag:String, ?indices:Array<Int>, ?offset:FlxPoint, fps:Float = 24, loop:Bool = false, flipX:Bool = false, flipY:Bool = false):Void {
-		if (indices == null || indices.empty())
+		if (indices.isBlank())
 			animation.addByPrefix(name, tag, fps, loop, flipX, flipY);
 		else animation.addByIndices(name, tag, indices, '', fps, loop, flipX, flipY);
 		if (offset != null)
@@ -210,11 +210,11 @@ class BaseSprite extends #if Animate_Atlas animate.FlxAnimate #else flixel.FlxSp
 	 */
 	public function addAtlasAnimation(name:String, tag:String, label:Bool = false, ?indices:Array<Int>, ?offset:FlxPoint, fps:Float = 24, loop:Bool = false, flipX:Bool = false, flipY:Bool = false):Void {
 		if (label)
-			if (indices == null || indices.empty())
+			if (indices.isBlank())
 				anim.addByFrameLabel(name, tag, fps, loop, flipX, flipY);
 			else anim.addByFrameLabelIndices(name, tag, indices, fps, loop, flipX, flipY);
 		else
-			if (indices == null || indices.empty())
+			if (indices.isBlank())
 				anim.addBySymbol(name, tag, fps, loop, flipX, flipY);
 			else anim.addBySymbolIndices(name, tag, indices, fps, loop, flipX, flipY);
 		if (offset != null)
@@ -249,7 +249,7 @@ class BaseSprite extends #if Animate_Atlas animate.FlxAnimate #else flixel.FlxSp
 		var suffixes:Array<String> = name.trimSplit('-');
 		var contextualSuffix:Null<String> = getSuffixViaContext(context);
 		if (!contextualSuffix.isBlank()) suffixes.push(contextualSuffix);
-		while (!suffixes.empty()) {
+		while (!suffixes.isBlank()) {
 			var _name:String = suffixes.join('-'); suffixes.pop();
 			if (animation.exists(_name)) {
 				animation.play(_name, force, reverse, frame);

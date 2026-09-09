@@ -24,23 +24,22 @@ class Macro {
 		Compiler.include('moonchart', true, ['moonchart.backend.*']); // force include no matter what
 
 		#if Scripting.Haxe
-		/* hxscript.setup.Presets.custom.push({
+		hxscript.setup.Presets.custom.push({
 			define: 'imaginative',
 			title: 'imaginative',
-			roots: [
-				'imaginative',
-				'Game'
-			],
+			roots: ['imaginative'],
 			ignore: [
 				'imaginative.backend.macro',
 				'imaginative.backend.native'
 			],
-			types: [],
+			types: ['Game'],
 			bases: [
-				'imaginative.backend.states.ScriptedState',
-				'imaginative.gameplay.hud.ScriptedHUD',
-				'imaginative.sprites',
-				'imaginative.ui.BaseBar'
+				// 'imaginative.backend.states.ScriptedState',
+				'imaginative.backend.systems.events.CallableEvent',
+				// 'imaginative.backend.systems.events.TimedEvent',
+				// 'imaginative.gameplay.hud.ScriptedHUD',
+				'imaginative.sprites'
+				// 'imaginative.ui.BaseBar'
 			],
 			abstractPackages: ['imaginative'],
 			abstracts: [],
@@ -58,8 +57,8 @@ class Macro {
 			abstracts: [],
 			abstractExclude: [],
 			globals: []
-		}); */
-		// trace([for (lib in hxscript.setup.Presets.active()) lib.title]);
+		});
+		trace([for (lib in hxscript.setup.Presets.active()) lib.title]);
 		#end
 	}
 

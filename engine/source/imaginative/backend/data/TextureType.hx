@@ -4,7 +4,7 @@ package imaginative.backend.data;
  * The texture type of a sprite.
  */
 enum abstract TextureType(String) {
-	inline public static final exts:StringedArray = ',xml,txt,json';
+	public static final exts:Array<String> = ['xml', 'txt', 'json'];
 
 	/**
 	 * States that this sprite uses the sparrow sheet method.

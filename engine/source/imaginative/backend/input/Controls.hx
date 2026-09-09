@@ -8,7 +8,7 @@ typedef Key = Null<FlxKey>;
 abstract KeyList(Array<Key>) from Array<Key> to Array<Key> {
 	inline public function set(list:KeyList):Void {
 		list.prune(key -> !(key == ANY || key == NONE || key == null));
-		if (list.empty()) trace('Cannot give an empty list. Check if your list contains invalid keys.');
+		if (list.isBlank()) trace('Cannot give an empty list. Check if your list contains invalid keys.');
 		else this.set(list);
 	}
 

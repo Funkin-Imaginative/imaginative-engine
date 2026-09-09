@@ -1,7 +1,7 @@
 package imaginative.backend.systems;
 
+#if Modding
 class Modding {
-	#if Modding
 	/**
 	 * The **current master** mod.
 	 */
@@ -39,5 +39,15 @@ class Modding {
 		mods.clear();
 		return modPath;
 	}
-	#end
+
+	/**
+	 * Gets the path of a file from all mods under the mod type.
+	 * @param path The mod path.
+	 * @param includeAllActiveModules If false, it excludes module mods that isn't the current one.
+	 * @return The filtered paths.
+	 */
+	public static function getAllInstancesOfFile(path:ModPath, includeAllActiveModules:Bool = false):Array<ModPath> {
+		return []; // TODO: actually write this
+	}
 }
+#end

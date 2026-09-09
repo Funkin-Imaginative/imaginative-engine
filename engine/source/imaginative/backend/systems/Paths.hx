@@ -1,7 +1,6 @@
 package imaginative.backend.systems;
 
 import sys.FileSystem;
-import imaginative.backend.data.StringedArray;
 import imaginative.backend.data.TextureType;
 
 /**
@@ -361,18 +360,21 @@ class Paths {
 	/**
 	 * @param path The mod path.
 	 * @param exts The extensions to filter through.
+	 * @param clearExts If true, the extensions array will be cleared. Useful if the array used is only being used this once.
 	 * @return The flitered path.
 	 */
-	public static function file(path:ModPath, exts:StringedArray = ''):ModPath {
-		if (exts.length == 0) return path;
+	public static function file(path:ModPath, ?exts:Array<String>, clearExts:Bool = false):ModPath {
+		if (exts.isBlank()) return path;
 		var ogExt:String = path.extension;
 		var result:ModPath = '';
 		for (ext in exts)
 			if (fileExists(result = path.applyExt(ext))) break;
 			else result = path.applyExt(ogExt); // jic
+		if (clearExts) exts.clear();
 		return result;
 	}
 
+	public static final fontExts:Array<String> = ['ttf', 'otf'];
 	/**
 	 * Gets the path of a font file from "`../fonts`".
 	 *
@@ -381,7 +383,7 @@ class Paths {
 	 * @return The desired path.
 	 */
 	inline public static function font(path:ModPath):ModPath {
-		var check:ModPath = file('fonts' + path, new StringedArray(',', 'ttf', 'otf'));
+		var check:ModPath = file('fonts' + path, fontExts);
 		if (!check.isFile) check = 'fonts' + path;
 		return check;
 	}
@@ -472,8 +474,9 @@ class Paths {
 	 * @return The desired path.
 	 */
 	inline public static function spritesheet(path:ModPath, type:TextureType = IsUnknown):ModPath
-		return #if Animate_Atlas type == IsAnimateAtlas ? json(image(path + 'Animation')) : #end file(image(path), type == IsUnknown ? TextureType.exts : ',' + TextureType.getExtFromType(type));
+		return #if Animate_Atlas type == IsAnimateAtlas ? json(image(path + 'Animation')) : #end file(image(path), type == IsUnknown ? TextureType.exts : [TextureType.getExtFromType(type)], type != IsUnknown);
 
+	public static final audioExts:Array<String> = ['wav', 'ogg', 'mp3'];
 	/**
 	 * Gets the path of an audio file.
 	 *
@@ -482,7 +485,7 @@ class Paths {
 	 * @return The desired path.
 	 */
 	inline public static function audio(path:ModPath):ModPath
-		return file(path, new StringedArray(',', 'wav', 'ogg', 'mp3'));
+		return file(path, audioExts);
 
 	/**
 	 * Gets the path of an instrumental file from "`../data/songs/`".
@@ -504,8 +507,9 @@ class Paths {
 	 * @return The desired path.
 	 */
 	inline public static function vocal(song:ModPath, ?suffix:String, ?variant:String):ModPath {
-		var suffixes:StringedArray = '-' + suffix.ifBlankReplace('');
-		var result:String = suffixes.length == 0 ? '' : suffixes;
+		var suffixes:Array<String> = suffix.ifBlankReplace('').trimSplit('-');
+		var result:String = suffixes.isBlank() ? '' : ('-' + suffixes.join('-'));
+		suffixes.clear();
 		return audio('data/songs' + song + '${variant.isBlank() ? '' : 'variations/$variant/'}audio/Voices$result');
 	}
 
@@ -528,6 +532,7 @@ class Paths {
 	inline public static function sound(path:ModPath):ModPath
 		return audio('sounds' + path);
 
+	public static final videoExts:Array<String> = ['mp4', 'mov', 'webm'];
 	/**
 	 * Gets the path of a video file.
 	 *
@@ -536,7 +541,7 @@ class Paths {
 	 * @return The desired path.
 	 */
 	inline public static function video(path:ModPath):ModPath
-		return file(path, new StringedArray(',' ,'mp4', 'mov', 'webm'));
+		return file(path, videoExts);
 	/**
 	 * Gets the path of a video file from "`../data/songs`" or "`../videos`".
 	 *
@@ -571,12 +576,12 @@ class Paths {
 	 * @param recursive If true, it can scan subfolders. **Ignores "setExts".**
 	 * @return The array of path data.
 	 */
-	public static function readFolder(path:ModPath, setExts:StringedArray = '', recursive:Bool = false):Array<FileModPath> {
+	public static function readFolder(path:ModPath, ?setExts:Array<String>, recursive:Bool = false):Array<FileModPath> {
 		var files:Array<FileModPath> = [];
 		if (path.isFolder) {
 			for (item in FileSystem.readDirectory(path.format())) {
 				var data:FileModPath = new FileModPath(FilePath.addTrailingSlash(path.path) + item, path.type, path.moduleId);
-				if (setExts.length == 0 || setExts.contains(data.extension)) files.push(data);
+				if (!setExts.isBlank() && setExts.contains(data.extension)) files.push(data);
 				if (recursive && data.toString().isFolder) files.merge(readFolder(data.toString(), setExts, true), true);
 			}
 			// sorts 'em alphabetically

@@ -1,6 +1,7 @@
 package imaginative.backend.scripting;
 
 import flixel.group.FlxGroup;
+import flixel.util.FlxSignal;
 import flixel.util.FlxSort;
 
 // TODO: Give ScriptRetCall its own file.
@@ -30,6 +31,11 @@ abstract ScriptRetCall<V>(TScriptRetCall<V>) from TScriptRetCall<V> to TScriptRe
  * Handles multiple scripts at once.
  */
 final class ScriptGroup extends Script {
+	/**
+	 * Gets dispatched when the "event" function is called.
+	 */
+	public final eventCalls:FlxTypedSignal<(String, CallableEvent, Dynamic) -> Void> = new FlxTypedSignal<(String, CallableEvent, Dynamic) -> Void>();
+
 	// script related variables
 	@:noCompletion override function get_type():ScriptType
 		return TypeGroup;
@@ -72,11 +78,10 @@ final class ScriptGroup extends Script {
 	}
 
 	override function set(variable:String, value:Any):Void {
-		if (terminated || !initialized) return;
-		forEach(script -> script.set(variable, value));
+		if (!terminated) forEach(script -> script.set(variable, value));
 	}
 	override function get<V>(variable:String, ?def:V):Null<V> {
-		if (terminated || !initialized) return def;
+		if (terminated) return def;
 		var lol:ScriptRetCall<V> = def;
 		var value:V = null;
 		forEach(script -> value = lol.call(value, script, script.get(variable)));
@@ -90,12 +95,11 @@ final class ScriptGroup extends Script {
 		forEach(script -> value = def.call(value, script, script.call(callback, arguments)));
 		return value;
 	}
-	override function event<E>(callback:String, event:E, ?parentOverride:Any):E {
-		if (terminated || !initialized)
-			return event;
+	override function event<E:CallableEvent>(callback:String, event:E, ?parentOverride:Any):E {
+		if (terminated || !initialized) return event;
+		eventCalls.dispatch(callback, event, parentOverride ?? parent);
 		forEach(script -> {
-			// putting it before to create the same effect as doing break
-			// if (event.prevented && !event.continueLoop) return;
+			if (event.cancelled && !event.breakLoop) return;
 			script.event(callback, event, parentOverride);
 		});
 		return event;
@@ -149,6 +153,7 @@ final class ScriptGroup extends Script {
 	}
 
 	override function destroy():Void {
+		eventCalls.destroy();
 		super.terminate();
 		super.destroy();
 	}

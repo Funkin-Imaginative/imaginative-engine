@@ -125,10 +125,10 @@ abstract class BaseMenuNavigator extends FlxTypedGroup<MenuNavItem> {
 	 * @return If true, this is empty.
 	 */
 	inline public function isEmpty():Bool
-		return members.empty();
+		return members.isBlank();
 
 	public function new(?saveTag:String, forceVisualOntoCurrent:Bool = true, allowInput:Bool = true, allowCursor:Bool = true) {
-		for (data in Paths.readFolder('sounds/menus', new imaginative.backend.data.StringedArray(',', 'wav', 'ogg', 'mp3')))
+		for (data in Paths.readFolder('sounds/menus', Paths.audioExts))
 			Assets.audio(data.toString(), true, false, true);
 		super();
 		this.saveTag = saveTag;
@@ -210,7 +210,7 @@ class MenuNavigator extends BaseMenuNavigator {
 			return;
 		}
 		items.prune(data -> !(data == null || data.id.isBlank()));
-		if (items.empty()) {
+		if (items.isBlank()) {
 			trace('Item list is empty.');
 			return;
 		}
@@ -236,7 +236,7 @@ class MenuNavigator extends BaseMenuNavigator {
 
 		if (isEmpty())
 			trace('Item list is empty!');
-		else if (!failed.empty())
+		else if (!failed.isBlank())
 			trace('Failed items are, ${failed.cleanDisplayList(true)}.');
 	}
 	@:inheritDoc(BaseMenuNavigator.initSelection)

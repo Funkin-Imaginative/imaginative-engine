@@ -45,11 +45,19 @@ enum abstract ScriptType(String) {
 class Script extends flixel.FlxBasic {
 	extern inline static function _init():Void {
 		trace('Initializing Scripting');
-		#if Scripting.Haxe HaxeScript._init(); #end
-		#if Scripting.Lua LuaScript._init(); #end
+
+		#if Scripting.Haxe
+		HaxeScript._init();
+		exts.merge(HaxeScript.exts);
+		#end
+
+		#if Scripting.Lua
+		LuaScript._init();
+		exts.merge(LuaScript.exts);
+		#end
 	}
 
-	public static final exts:imaginative.backend.data.StringedArray = #if Scripting.Haxe HaxeScript.exts + #end #if Scripting.Lua LuaScript.exts + #end '';
+	public static final exts:Array<String> = [];
 
 	public var priorityIndex:Int = 1000;
 
@@ -68,7 +76,7 @@ class Script extends flixel.FlxBasic {
 	@:noCompletion function set_parent(value:Dynamic):Dynamic return null;
 
 	/**
-	 * Creates a script from a file.
+	 * Creates a script from a mod path.
 	 * @param path The mod path.
 	 * @param type The script type, just in case you wanna be specific about coding language.
 	 * @return The script.
@@ -83,6 +91,29 @@ class Script extends flixel.FlxBasic {
 			return new LuaScript(Paths.script(path, TypeLua));
 		#end
 		return new Script(Paths.script(path, type));
+	}
+	/**
+	 * Creates an array of scripts from a mod path.
+	 * @param path The mod path.
+	 * @param type The script type, just in case you wanna be specific about coding language.
+	 * @param includeAllActiveModules If false, it excludes module mods that isn't the current one.
+	 * @return The array of scripts.
+	 */
+	public static function multiCreate(path:ModPath, type:ScriptType = TypeUnknown, includeAllActiveModules:Bool = false):Array<Script> {
+		path.applyExt();
+		#if Scripting
+			#if Modding
+			return [
+				for (ext in exts)
+					for (instance in Modding.getAllInstancesOfFile(path.applyExt(ext)))
+						create(instance.applyExt(), type)
+			].setLast();
+			#else
+			return [create(path, type)].setLast();
+			#end
+		#else
+		return [].setLast();
+		#end
 	}
 
 	/**
@@ -128,7 +159,7 @@ class Script extends flixel.FlxBasic {
 		if (terminated || !initialized) return def.call(this);
 		return def.call(this, _call(callback, arguments));
 	}
-	public function event<E>(callback:String, event:E, ?parentOverride:Any):E {
+	public function event<E:CallableEvent>(callback:String, event:E, ?parentOverride:Any):E {
 		if (terminated || !initialized) return event;
 		final oldParent:Any = parent;
 		parent = parentOverride ?? oldParent;

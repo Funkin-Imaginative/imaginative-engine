@@ -455,12 +455,12 @@ class Conductor extends flixel.FlxBasic {
 	extern inline function _onLoad():Void {
 		endTime = metadata.length;
 		loopTime = metadata.loopPoint;
-		if (metadata.checkpoints != null && !metadata.checkpoints.empty()) {
+		if (metadata.checkpoints != null && !metadata.checkpoints.isBlank()) {
 			metadata.checkpoints.sort((a, b) -> FlxSort.byValues(FlxSort.ASCENDING, a.time, b.time));
 			metadata.checkpoints[0].time = 0;
 			checkpoints.merge(metadata.checkpoints);
 		}
-		if (checkpoints.empty()) {
+		if (checkpoints.isBlank()) {
 			trace('No checkpoints detected for "${metadata.name}", double check your shit.');
 			checkpoints.push(new CheckpointMeta(100));
 		}

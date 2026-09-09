@@ -264,8 +264,7 @@ class Project extends HXProject {
 
 		if (editWindowBorder.exists())
 			addHaxelib('hxWindowColorMode');
-		if (scriptSupport.exists())
-			addHaxelib('compiletime');
+		addHaxelib('compiletime');
 
 		addHaxeMacro('imaginative.backend.macro.Macro.init()');
 		setDefine('imaginative');
@@ -283,46 +282,10 @@ class Project extends HXProject {
 		if (canHaxeScript.exists()) {
 			if (isDebug()) setHaxedef('hxscript_verbose');
 			else setHaxedef('hxscript_no_banner');
-			// setHaxedef('hxscript_host', 'imaginative,Game');
+			// setHaxedef('hxscript_host', 'imaginative');
 			// setHaxedef('hxscript_bridge_all');
 			setHaxedef('hxscript_cppia');
 			setHaxedef('scriptable');
-
-			/* addHaxeMacro("hxscript.setup.Presets.custom.push({
-				define: 'imaginative',
-				title: 'imaginative',
-				roots: [
-					'imaginative',
-					'Game'
-				],
-				ignore: [
-					'imaginative.backend.macro',
-					'imaginative.backend.native'
-				],
-				types: [],
-				bases: [
-					'imaginative.backend.states.ScriptedState',
-					'imaginative.gameplay.hud.ScriptedHUD',
-					'imaginative.sprites',
-					'imaginative.ui.BaseBar'
-				],
-				abstractPackages: ['imaginative'],
-				abstracts: [],
-				abstractExclude: [],
-				globals: []
-			})");
-			addHaxeMacro("hxscript.setup.Presets.custom.push({
-				define: 'thx.semver',
-				title: 'thx.semver',
-				roots: ['thx.semver'],
-				ignore: [],
-				types: [],
-				bases: [],
-				abstractPackages: ['thx.semver'],
-				abstracts: [],
-				abstractExclude: [],
-				globals: []
-			})"); */
 		}
 		if (isRelease() && !isDebug())
 			setHaxedef('analyzer-optimize');

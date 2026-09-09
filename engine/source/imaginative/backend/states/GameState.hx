@@ -58,7 +58,9 @@ class GameState extends FlxSubState implements IConductorReactive {
 	function initScript():Void {
 		if (!allowScripts) return;
 		add(stateScripts = new ScriptGroup(this));
-		stateScripts.add(Script.create('data/states/$id'));
+		for (script in Script.multiCreate('data/states/$id'))
+			stateScripts.add(script);
+		ArrayUtil.clearLast();
 		stateScripts.init();
 	}
 
@@ -67,7 +69,7 @@ class GameState extends FlxSubState implements IConductorReactive {
 			return stateScripts.call(callback, arguments, def);
 		return def.call(stateScripts);
 	}
-	inline public function eventCall<E>(callback:String, event:E, ?parentOverride:Any):E {
+	inline public function eventCall<E:CallableEvent>(callback:String, event:E, ?parentOverride:Any):E {
 		if (allowScripts && stateScripts != null)
 			return stateScripts.event(callback, event, parentOverride);
 		return event;

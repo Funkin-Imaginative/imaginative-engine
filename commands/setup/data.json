@@ -54,5 +54,5 @@
 
 	"moonchart": {},
 	"thx.semver": {},
-	"compiletime": { "checks": { "optional": true } }
+	"compiletime": {}
 }

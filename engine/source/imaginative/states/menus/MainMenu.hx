@@ -56,7 +56,7 @@ class MainMenu extends GameState {
 		super.preCreate();
 
 		var lePath = Paths.image('menus/main');
-		var lol = Paths.readFolder(lePath.applyExt(), new imaginative.backend.data.StringedArray(',', 'xml'));
+		var lol = Paths.readFolder(lePath.applyExt(), ['xml'], true);
 		for (file in lol)
 			itemList.push(file.file.getSlice('/', -1));
 		itemList.sortByList(Assets.text(Paths.txt(lePath + 'order'), true).trimSplit('\n'));

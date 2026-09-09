@@ -29,7 +29,7 @@ class TitleScreen extends GameState {
 
 	@:unreflective static final _intro_entry:Array<String> = [];
 	static function getIntroEntry(reload:Bool = false):Array<String> {
-		if (reload || _intro_entry.empty()) {
+		if (reload || _intro_entry.isBlank()) {
 			_intro_entry.clear();
 			_intro_entry.merge(FlxG.random.getObject(introTextData.texts));
 		}
