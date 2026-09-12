@@ -55,20 +55,34 @@ class GameState extends FlxSubState implements IConductorReactive {
 	}
 
 	public var stateScripts:Null<ScriptGroup> = null;
-	function initScript():Void {
+	function loadScripting():Void { // in-case you wanna override this or smth
 		if (!allowScripts) return;
 		add(stateScripts = new ScriptGroup(this));
 		for (script in Script.multiCreate('data/states/$id'))
 			stateScripts.add(script);
 		ArrayUtil.clearLast();
-		stateScripts.init();
+		stateScripts.load();
 	}
 
+	/**
+	 * Calls a function throughout the state scripts.
+	 * @param callback The function name.
+	 * @param arguments The function arguments.
+	 * @param def If the function return is null, it returns this.
+	 * @return The functions return value.
+	 */
 	inline public function scriptCall<R>(callback:String, ?arguments:Array<Any>, ?def:ScriptRetCall<R>):Null<R> {
 		if (allowScripts && stateScripts != null)
 			return stateScripts.call(callback, arguments, def);
 		return def.call(stateScripts);
 	}
+	/**
+	 * Runs an event call throughout the state scripts.
+	 * @param callback The function name.
+	 * @param event The event to call.
+	 * @param parentOverride What the parent should temporally be when called.
+	 * @return The event that was called.
+	 */
 	inline public function eventCall<E:CallableEvent>(callback:String, event:E, ?parentOverride:Any):E {
 		if (allowScripts && stateScripts != null)
 			return stateScripts.event(callback, event, parentOverride);
@@ -78,7 +92,7 @@ class GameState extends FlxSubState implements IConductorReactive {
 	public var stateCamera:FlxCamera;
 
 	function preCreate():Void {
-		initScript();
+		loadScripting();
 		scriptCall('onPreCreate');
 		FlxG.cameras.reset(camera = stateCamera = new FlxCamera());
 		stateCamera.bgColor = isSubState ? FlxColor.TRANSPARENT : FlxColor.BLACK;
@@ -127,6 +141,12 @@ class GameState extends FlxSubState implements IConductorReactive {
 	}
 	function updatePost(delta:Float):Void
 		scriptCall('onUpdatePost');
+
+	override function draw():Void {
+		var event = eventCall('onDraw', CallableEvent.recycle());
+		if (event.cancelled) return;
+		super.draw(); scriptCall('onDrawPost');
+	}
 
 	override function openSubState(sub:FlxSubState):Void {
 		scriptCall('uponOpeningSubstate', [sub]);
@@ -187,13 +207,15 @@ class GameState extends FlxSubState implements IConductorReactive {
 	}
 
 	override function close():Void {
-		scriptCall('onClose');
+		var event = eventCall('onClose', CallableEvent.recycle());
+		if (event.cancelled) return;
 		if (freezeParent) {
 			parent.persistentUpdate = true;
 			if (parent.conductor != conductor)
 				parent.conductor.resume();
 		}
 		super.close();
+		scriptCall('onClosePost');
 	}
 
 	function onReset():Void

@@ -30,11 +30,14 @@ abstract ScriptRetCall<V>(TScriptRetCall<V>) from TScriptRetCall<V> to TScriptRe
 /**
  * Handles multiple scripts at once.
  */
-final class ScriptGroup extends Script {
+class ScriptGroup extends Script {
 	/**
 	 * Gets dispatched when the "event" function is called.
+	 * @param String The function name that was called.
+	 * @param CallableEvent The event that was called.
+	 * @param Dynamic The script parent.
 	 */
-	public final eventCalls:FlxTypedSignal<(String, CallableEvent, Dynamic) -> Void> = new FlxTypedSignal<(String, CallableEvent, Dynamic) -> Void>();
+	public final onEventCall:FlxTypedSignal<(String, CallableEvent, Dynamic) -> Void> = new FlxTypedSignal<(String, CallableEvent, Dynamic) -> Void>();
 
 	// script related variables
 	@:noCompletion override function get_type():ScriptType
@@ -71,15 +74,28 @@ final class ScriptGroup extends Script {
 
 	// script related functions
 	@:noCompletion override function setup():Void {}
-	override function init():Void {
+	/**
+	 * Once ran the groups members initialize and are able to do things!
+	 */
+	override function load():Void {
 		if (initialized) return;
 		initialized = true;
-		forEach(script -> script.init());
+		forEach(script -> script.load());
 	}
 
-	override function set(variable:String, value:Any):Void {
+	/**
+	 * Sets a variable throughout the group.
+	 * @param variable The variable name.
+	 * @param value The new value.
+	 */
+	override function set(variable:String, value:Any):Void
 		if (!terminated) forEach(script -> script.set(variable, value));
-	}
+	/**
+	 * Gets a variable within the group.
+	 * @param variable The variable name.
+	 * @param def If the variable is null, it returns this.
+	 * @return The variables value.
+	 */
 	override function get<V>(variable:String, ?def:V):Null<V> {
 		if (terminated) return def;
 		var lol:ScriptRetCall<V> = def;
@@ -88,6 +104,13 @@ final class ScriptGroup extends Script {
 		return value;
 	}
 
+	/**
+	 * Calls a function throughout the group.
+	 * @param callback The function name.
+	 * @param arguments The function arguments.
+	 * @param def If the function return is null, it returns this.
+	 * @return The functions return value.
+	 */
 	override function call<R>(callback:String, ?arguments:Array<Any>, ?def:ScriptRetCall<R>):Null<R> {
 		if (terminated || !initialized)
 			return def.call(this);
@@ -95,11 +118,18 @@ final class ScriptGroup extends Script {
 		forEach(script -> value = def.call(value, script, script.call(callback, arguments)));
 		return value;
 	}
+	/**
+	 * Runs an event call throughout the group.
+	 * @param callback The function name.
+	 * @param event The event to call.
+	 * @param parentOverride What the parent should temporally be when called.
+	 * @return The event that was called.
+	 */
 	override function event<E:CallableEvent>(callback:String, event:E, ?parentOverride:Any):E {
 		if (terminated || !initialized) return event;
-		eventCalls.dispatch(callback, event, parentOverride ?? parent);
+		onEventCall.dispatch(callback, event, parentOverride ?? parent);
 		forEach(script -> {
-			if (event.cancelled && !event.breakLoop) return;
+			if (event.cancelled && event.breakLoop) return;
 			script.event(callback, event, parentOverride);
 		});
 		return event;
@@ -109,7 +139,8 @@ final class ScriptGroup extends Script {
 		throw 'Why tf are you calling this? ScriptGroup doesn\'t need it!';
 	}
 
-	@:noCompletion override function terminate():Void {}
+	@:noCompletion override function terminate():Void
+		forEach(instance -> instance.getScript(script -> script.terminate()));
 
 	// group related functions
 	inline public function add(script:ScriptInstance):ScriptInstance
@@ -128,11 +159,17 @@ final class ScriptGroup extends Script {
 		return members.keyValueIterator();
 	}
 
+	/**
+	 * For loops through all scripts within the group.
+	 * @param func The function to run on each loop.
+	 * @param recurse If true, if a script group gets called upon, then it will run it's "forEach" function.
+	 */
 	public function forEach(func:ScriptInstance -> Void, recurse:Bool = true):Void {
 		for (instance in this) {
 			if (instance == null) continue; // jic
 			// siphons out dead scripts
 			if ((instance.type.isLang && instance.terminated) || instance.type == TypeUnknown) {
+				instance.destroy();
 				remove(instance);
 				continue;
 			}
@@ -141,10 +178,16 @@ final class ScriptGroup extends Script {
 			else func(instance);
 		}
 	}
+	/**
+	 * Same as "forEach" but you can specify the coding language!
+	 * @param type The script type.
+	 * @param func The function to run on each loop.
+	 * @param recurse If true, if a script group gets called upon, then it will run it's "forEach" function.
+	 */
 	inline public function forEachOfType(type:ScriptType, func:ScriptInstance -> Void, recurse:Bool = true):Void {
-		if (!type.isLang) throw 'Invalid type detected. ($type)';
+		if (!type.isLang) throw 'Invalid type detected. (type: "$type")';
 		function typeFunc(instance:ScriptInstance):Void {
-			if (instance.isGroup)
+			if (recurse && instance.isGroup)
 				typeFunc(instance);
 			else if (instance.type == type)
 				func(instance);
@@ -153,8 +196,8 @@ final class ScriptGroup extends Script {
 	}
 
 	override function destroy():Void {
-		eventCalls.destroy();
-		super.terminate();
+		onEventCall.destroy();
+		terminate(); super.terminate();
 		super.destroy();
 	}
 }

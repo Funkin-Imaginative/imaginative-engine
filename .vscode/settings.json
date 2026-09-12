@@ -5,6 +5,7 @@
 		"HAXEPATH",
 		"hxhardware",
 		"hxscript",
+		"imag",
 		"Kawai",
 		"resynced",
 		"vswhere"
@@ -17,7 +18,7 @@
 	"editor.insertSpaces": false,
 
 	"files.associations": {
-		"*.{hxp,haxe,hscript,hsc,hxs,hxc}": "haxe",
+		"*.{hxp,haxe}": "haxe",
 		"*.json": "jsonc"
 	},
 	"files.autoGuessEncoding": true,

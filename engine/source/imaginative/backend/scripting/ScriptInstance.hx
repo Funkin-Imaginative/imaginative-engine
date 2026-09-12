@@ -6,7 +6,7 @@ package imaginative.backend.scripting;
 @:forward(
 	// script related
 	type, priorityIndex,
-	parent, init,
+	parent, load,
 	set, get,
 	call, event,
 	terminated,

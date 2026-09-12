@@ -10,7 +10,7 @@ using StringTools;
 using haxe.macro.ExprTools;
 using haxe.macro.Tools;
 
-// based from cne code
+// based from cne code, wanna try and do something different at some point
 class CallableEventMacro {
 	inline static macro function build():Array<Field> {
 		var classFields = Context.getBuildFields();
@@ -67,6 +67,8 @@ class CallableEventMacro {
 			kind: FFun(func),
 			access: [APublic, AStatic]
 		}
+		if (classFields.exists(field -> field.name == 'recycle'))
+			funcField.access.push(AOverride);
 
 		classFields.push(funcField);
 

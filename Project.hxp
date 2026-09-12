@@ -42,31 +42,31 @@ class Project extends HXProject {
 	 * The starting window title.
 	 * Although slightly mananaged by the `FlxWindow` class I'm still having this here.
 	 */
-	static final windowTitle:String = 'Friday Night Funkin\': Imaginative Engine';
+	inline static final windowTitle:String = 'Friday Night Funkin\': Imaginative Engine';
 	/**
 	 * The name of the executable file when the game complies.
 	 */
-	static final executableName:String = 'Imaginative';
+	inline static final executableName:String = 'Imaginative';
 	/**
 	 * The name of the fallback mod the assets folder should become when mod support is enabled.
 	 */
-	static final fallbackMod:String = 'funkin';
+	inline static final fallbackMod:String = 'funkin';
 	/**
 	 * The directory path to the source code.
 	 */
-	static final sourceCodeDirectory:String = 'engine/source';
+	inline static final sourceCodeDirectory:String = 'engine/source';
 	/**
 	 * The package name.
 	 */
-	static final packageName:String = 'imaginative-engine';
+	inline static final packageName:String = 'imaginative-engine';
 	/**
 	 * The class path to the main class.
 	 */
-	static final mainClass:String = 'Game';
+	inline static final mainClass:String = 'Game';
 	/**
 	 * The company name.
 	 */
-	static final companyName:String = 'Funkin-Imaginative';
+	inline static final companyName:String = 'Funkin-Imaginative';
 
 	// Compiler flags.
 	/**
@@ -280,9 +280,10 @@ class Project extends HXProject {
 		if (allowVideos.exists())
 			setHaxedef('HXVLC_NO_SHARE_DIRECTORY');
 		if (canHaxeScript.exists()) {
-			if (isDebug()) setHaxedef('hxscript_verbose');
-			else setHaxedef('hxscript_no_banner');
-			// setHaxedef('hxscript_host', 'imaginative');
+			if (isDebug()) {
+				setHaxedef('hxscript_verbose');
+				setHaxedef('hxscript_profile');
+			} else setHaxedef('hxscript_no_banner');
 			// setHaxedef('hxscript_bridge_all');
 			setHaxedef('hxscript_cppia');
 			setHaxedef('scriptable');
@@ -408,7 +409,7 @@ class Project extends HXProject {
 	 * @param name The name of the library to add.
 	 * @param version The version of the library to add. Optional.
 	 */
-	inline public function addHaxelib(name:String, ?version:LibraryVersion):Void {
+	public function addHaxelib(name:String, ?version:LibraryVersion):Void {
 		var addLib:Bool = !FileSystem.exists('.haxelib');
 		final folderName:String = name.replace('.', ',');
 		if (!addLib)
@@ -547,8 +548,7 @@ class Project extends HXProject {
 	 * Display an info message. This should not interfere with the build process.
 	 */
 	extern inline public function info(message:String):Void
-		if (command != 'display')
-			Log.info('[INFO] ${message.replace('\n', '')}');
+		if (command != 'display') Log.info('[INFO] ${message.replace('\n', '')}');
 }
 
 abstract LibraryVersion(String) from String to String {
@@ -575,8 +575,7 @@ abstract CompilerFlag(String) {
 	}
 
 	extern inline public function new(input:String)
-		if (!list.contains(this = input))
-			list.push(this);
+		if (!list.contains(this = input)) list.push(this);
 
 	@:from extern inline public static function fromString(input:String):CompilerFlag
 		return new CompilerFlag(input);
@@ -586,23 +585,19 @@ abstract CompilerFlag(String) {
 	 * @param value The flag value.
 	 */
 	extern inline public function enable(?value:String):Void
-		if (!exists())
-			parent.setDefine(this, value);
+		if (!exists()) parent.setDefine(this, value);
 	/**
 	 * Enable this compiler flag by setting the appropriate compile define.
 	 * @param value The flag value.
 	 */
 	extern inline public function softEnable(?value:String):Void
-		if (!exists())
-			parent.setHaxedef(this, value);
+		if (!exists()) parent.setHaxedef(this, value);
 	/**
 	 * Disable this compiler flag by removing the appropriate compile define.
 	 */
 	extern inline public function disable():Void
-		if (parent.hasDefine(this))
-			parent.unsetDefine(this);
-		else if (exists()) // looks gross but makes sense
-			parent.unsetHaxedef(this);
+		if (parent.hasDefine(this)) parent.unsetDefine(this);
+		else if (exists()) parent.unsetHaxedef(this); // looks gross but makes sense
 
 	/**
 	 * Query if this compiler flag exists.

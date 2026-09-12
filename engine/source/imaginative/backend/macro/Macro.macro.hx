@@ -10,6 +10,8 @@ using haxe.macro.ExprTools;
 
 class Macro {
 	inline static function init():Void {
+		trace('Initializing Macros');
+
 		var classPath:String = Std.string(Macro).replace('Class<', '').replace('>', '');
 		Compiler.addMetadata('@:build($classPath.buildOntoFlxG())', 'flixel.FlxG');
 
@@ -38,7 +40,8 @@ class Macro {
 				'imaginative.backend.systems.events.CallableEvent',
 				// 'imaginative.backend.systems.events.TimedEvent',
 				// 'imaginative.gameplay.hud.ScriptedHUD',
-				'imaginative.sprites'
+				'imaginative.sprites.BaseSprite',
+				'imaginative.sprites.BeatSprite',
 				// 'imaginative.ui.BaseBar'
 			],
 			abstractPackages: ['imaginative'],
@@ -58,7 +61,6 @@ class Macro {
 			abstractExclude: [],
 			globals: []
 		});
-		trace([for (lib in hxscript.setup.Presets.active()) lib.title]);
 		#end
 	}
 

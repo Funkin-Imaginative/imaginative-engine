@@ -58,10 +58,8 @@ class StringUtil {
 		return count;
 	}
 
-	inline public static function iterateSlices(string:String, delimiter:String):SliceIterator
-		return new SliceIterator(string, delimiter);
-	inline public static function iterateSlicesKV(string:String, delimiter:String):SliceKeyValueIterator
-		return new SliceKeyValueIterator(string, delimiter);
+	inline public static function iterateSlices(string:String, delimiter:String):FullSliceIterator
+		return new FullSliceIterator(string, delimiter);
 
 	/**
 	 * Checks if a string is blank.
@@ -156,6 +154,16 @@ class StringUtil {
 		return new StringIterator(string);
 	@:noCompletion inline public static function keyValueIterator(string:String):StringKeyValueIterator
 		return new StringKeyValueIterator(string);
+}
+
+private class FullSliceIterator {
+	var string:String; var delimiter:String;
+	inline public function new(string:String, delimiter:String) {
+		this.string = string;
+		this.delimiter = delimiter;
+	}
+	inline public function iterator():SliceIterator return new SliceIterator(string, delimiter);
+	inline public function keyValueIterator():SliceKeyValueIterator return new SliceKeyValueIterator(string, delimiter);
 }
 
 private class SliceIterator {

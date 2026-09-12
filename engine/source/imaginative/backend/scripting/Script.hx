@@ -42,27 +42,35 @@ enum abstract ScriptType(String) {
 /**
  * The base script class.
  */
-class Script extends flixel.FlxBasic {
-	extern inline static function _init():Void {
+class Script extends flixel.FlxBasic { // I would be doing "implements IFlxDestroyable" but being able to add scripts to regular groups is nice :)
+	extern inline static function init():Void {
 		trace('Initializing Scripting');
 
+		GlobalScript.init();
+
 		#if Scripting.Haxe
-		HaxeScript._init();
+		HaxeScript.init();
 		exts.merge(HaxeScript.exts);
 		#end
 
 		#if Scripting.Lua
-		LuaScript._init();
+		LuaScript.init();
 		exts.merge(LuaScript.exts);
 		#end
 	}
 
+	/**
+	 * All extension types that say that file is a script.
+	 */
 	public static final exts:Array<String> = [];
 
+	/**
+	 * The sort index of this script.
+	 */
 	public var priorityIndex:Int = 1000;
 
 	/**
-	 * States the type of script this is.
+	 * States what type of script this is.
 	 */
 	public var type(get, never):ScriptType;
 	@:noCompletion function get_type():ScriptType
@@ -82,6 +90,10 @@ class Script extends flixel.FlxBasic {
 	 * @return The script.
 	 */
 	public static function create(path:ModPath, type:ScriptType = TypeUnknown):Script {
+		#if debug
+		if (!Paths.script(path, type).isFile)
+			trace('Script file doesn\'t exist. (path: "${path.format()}")');
+		#end
 		#if Scripting.Haxe
 		if (type == TypeUnknown || type == TypeHaxe)
 			return new HaxeScript(Paths.script(path, TypeHaxe));
@@ -132,7 +144,7 @@ class Script extends flixel.FlxBasic {
 			default: new Script(null, code);
 		}
 		onCreate(script);
-		script.init();
+		script.load();
 		onLoad(script);
 		return script;
 	}
@@ -147,18 +159,50 @@ class Script extends flixel.FlxBasic {
 		this.filePath = FileModPath.fromModPath(filePath);
 		setup();
 	}
-	function setup():Void {}
+	function setup():Void GlobalScript.call('onScriptCreate', [this, type]);
 
+	/**
+	 * When true the code can run.
+	 */
 	public var initialized(default, null):Bool = false;
-	public function init():Void {}
+	/**
+	 * Once ran the script initializes and is able to do things!
+	 */
+	public function load():Void
+		if (type.isLang) call('onLoad');
 
+	/**
+	 * Sets a variable within the script.
+	 * @param variable The variable name.
+	 * @param value The new value.
+	 */
 	public function set(variable:String, value:Any):Void {}
+	/**
+	 * Gets a variable within the script.
+	 * @param variable The variable name.
+	 * @param def If the variable is null, it returns this.
+	 * @return The variables value.
+	 */
 	public function get<V>(variable:String, ?def:V):Null<V> return def;
 
+	/**
+	 * Calls a function within the script.
+	 * @param callback The function name.
+	 * @param arguments The function arguments.
+	 * @param def If the function return is null, it returns this.
+	 * @return The functions return value.
+	 */
 	public function call<R>(callback:String, ?arguments:Array<Any>, ?def:ScriptRetCall<R>):Null<R> {
 		if (terminated || !initialized) return def.call(this);
 		return def.call(this, _call(callback, arguments));
 	}
+	/**
+	 * Runs an event call within the script.
+	 * @param callback The function name.
+	 * @param event The event to call.
+	 * @param parentOverride What the parent should temporally be when called.
+	 * @return The event that was called.
+	 */
 	public function event<E:CallableEvent>(callback:String, event:E, ?parentOverride:Any):E {
 		if (terminated || !initialized) return event;
 		final oldParent:Any = parent;
@@ -168,22 +212,28 @@ class Script extends flixel.FlxBasic {
 		return event;
 	}
 
-	@:noCompletion function _call(callback:String, arguments:Array<Any>):Any {
-		throw 'You gotta override "_call"!';
-	}
+	@:noCompletion function _call(callback:String, arguments:Array<Any>):Any
+		throw 'This function needs to overridden.';
 
+	/**
+	 * When true the code will no longer run.
+	 */
 	public var terminated(default, null):Bool = false;
+	/**
+	 * Once ran the script is killed off and will no longer work.
+	 */
 	public function terminate():Void terminated = true;
 
 	override function destroy():Void {
 		call('onEnd');
 		terminate();
 		super.destroy();
+		GlobalScript.call('onScriptDestroy', [this, type]);
 	}
 
 	#if FLX_DEBUG
 	// just so scripts don't contribute to "activeCount" and "visibleCount"
-	override function update(elapsed:Float):Void {}
+	override function update(delta:Float):Void {}
 	override function draw():Void {}
 	#end
 }

@@ -10,9 +10,9 @@ class CallableEvent implements IFlxDestroyable {
 	 */
 	@:ignore public var cancelled:Bool = false;
 	/**
-	 * If false, it will stop whatever for loop is calling upon this event.
+	 * If true, it will stop whatever for loop is calling upon this event.
 	 */
-	@:ignore public var breakLoop:Bool = true;
+	@:ignore public var breakLoop:Bool = false;
 
 	/**
 	 * Just sets "cancelled" to true.
@@ -22,19 +22,15 @@ class CallableEvent implements IFlxDestroyable {
 	/**
 	 * Has the power to make the loop come to a halt.
 	 */
-	inline public function halt():Void {
-		cancelled = true;
-		breakLoop = false;
+	inline public function halt():Void
+		cancelled = breakLoop = true;
+
+	public function new() {
+		trace('${flixel.util.FlxStringUtil.getClassName(this, true)} Initalized');
 	}
 
-	public function new() {}
+	public function _recycle():Void
+		cancelled = breakLoop = true;
 
-	public function _recycle():Void {
-		cancelled = false;
-		breakLoop = true;
-	}
-
-	public function destroy():Void {
-		//
-	}
+	public function destroy():Void {}
 }

@@ -521,6 +521,7 @@ class Conductor extends flixel.FlxBasic {
 			curStep = info.curStep;
 			if (playing) {
 				onStepHit.dispatch(curStep);
+				GlobalScript._stepHit(this);
 				for (reactor in reactors)
 					if (reactor is FlxCamera) {
 						if (FlxG.cameras.list.contains(cast reactor))
@@ -538,6 +539,7 @@ class Conductor extends flixel.FlxBasic {
 			curBeat = info.curBeat;
 			if (playing) {
 				onBeatHit.dispatch(curBeat);
+				GlobalScript._beatHit(this);
 				for (reactor in reactors)
 					if (reactor is FlxCamera) {
 						if (FlxG.cameras.list.contains(cast reactor))
@@ -555,6 +557,7 @@ class Conductor extends flixel.FlxBasic {
 			curMeasure = info.curMeasure;
 			if (playing) {
 				onMeasureHit.dispatch(curMeasure);
+				GlobalScript._measureHit(this);
 				for (reactor in reactors)
 					if (reactor is FlxCamera) {
 						if (FlxG.cameras.list.contains(cast reactor))

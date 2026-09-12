@@ -119,7 +119,7 @@ class TitleScreen extends GameState {
 					var imageAsset:ModPath = data.image;
 					if (data.text != null) {
 						introText.text = '';
-						for (i => text in data.text.iterateSlicesKV('\n')) {
+						for (i => text in data.text.iterateSlices('\n')) {
 							if (text == '{INTRO_TEXT}')
 								introText.text += getIntroEntry()[i] + '\n';
 							else introText.text += '$text\n';

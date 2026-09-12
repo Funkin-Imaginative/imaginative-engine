@@ -261,7 +261,7 @@ abstract ModPath(String) {
 	}
 }
 
-final class FileModPath {
+class FileModPath {
 	var _path:FilePath;
 
 	/**

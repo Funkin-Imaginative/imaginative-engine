@@ -21,11 +21,15 @@ class LaunchScreen extends GameState {
 			Assets.init();
 			// Settings.init();
 			Controls.init();
-			Script._init();
+			Script.init();
 
 			FlxG.fixedTimestep = false;
 			flixel.FlxSprite.defaultAntialiasing = true; // this ain't a pixel game... yeah ik week 6 exists!
-			FlxG.signals.preStateCreate.add(state -> Game.state.preCreate());
+			FlxG.signals.preStateCreate.add(state -> {
+				cpp.vm.Gc.run(false);
+				cpp.vm.Gc.compact();
+				Game.state.preCreate();
+			});
 			/* FlxG.signals.preStateSwitch.add(() -> @:privateAccess {
 				function getName(lol:flixel.util.typeLimit.NextState):String {
 					return switch (lol) {
