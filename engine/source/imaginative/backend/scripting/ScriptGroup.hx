@@ -4,7 +4,6 @@ import flixel.group.FlxGroup;
 import flixel.util.FlxSignal;
 import flixel.util.FlxSort;
 
-// TODO: Give ScriptRetCall its own file.
 /**
  * The callback for script group default defines.
  * @param V The current value that has been determined by the loop.
@@ -78,8 +77,7 @@ class ScriptGroup extends Script {
 	 * Once ran the groups members initialize and are able to do things!
 	 */
 	override function load():Void {
-		if (initialized) return;
-		initialized = true;
+		if (initialized) return; initialized = true;
 		forEach(script -> script.load());
 	}
 

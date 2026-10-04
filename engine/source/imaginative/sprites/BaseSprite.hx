@@ -3,6 +3,7 @@ package imaginative.sprites;
 import flixel.math.FlxPoint;
 import flixel.math.FlxRect;
 import imaginative.backend.data.TextureType;
+import imaginative.backend.systems.events.callables.sprites.*;
 
 /**
  * Tells you what a sprites current animation is supposed to mean.
@@ -37,6 +38,17 @@ enum abstract AnimationContext(String) {
 	 * States that the sprite animation is unclear.
 	 */
 	var Unclear = null;
+
+	extern inline public function debugString():String {
+		return switch (abstract) {
+			case IsDancing: 'IsDancing';
+			case IsSinging: 'IsSinging';
+			case HasMissed: 'HasMissed';
+			case NoDancing: 'NoDancing';
+			case NoSinging: 'NoSinging';
+			case Unclear: 'Unclear';
+		}
+	}
 }
 
 class BaseSprite extends #if Animate_Atlas animate.FlxAnimate #else flixel.FlxSprite #end {
@@ -58,13 +70,13 @@ class BaseSprite extends #if Animate_Atlas animate.FlxAnimate #else flixel.FlxSp
 	 * @param displayWarning If true, a warning message will appear.
 	 * @return The sprite itself.
 	 */
-	public function loadImage(path:ModPath, width:Int = 0, height:Int = 0, displayWarning:Bool = false):BaseSprite {
+	public function loadImage(path:ModPath, width:Int = 0, height:Int = 0, displayWarning:Bool = false, ?infos:haxe.PosInfos):BaseSprite {
 		var _path:ModPath = Paths.image(path);
 		if (_path.isFile)
 			try {
 				loadGraphic(Assets.image(path), !(width < 1 || height < 1), width, height);
 			} catch(error:haxe.Exception)
-				if (displayWarning) trace('The image failed to load. (path: "${_path.format()}", error: "${error.message}")');
+				if (displayWarning) log('The image failed to load. (path: "${_path.format()}", error: "${error.message}")', ErrorMessage, infos);
 		return this;
 	}
 	/**
@@ -74,7 +86,7 @@ class BaseSprite extends #if Animate_Atlas animate.FlxAnimate #else flixel.FlxSp
 	 * @param displayWarning If true, a warning message will appear.
 	 * @return The sprite itself.
 	 */
-	public function loadSheet(path:ModPath, type:TextureType = IsUnknown, displayWarning:Bool = false):BaseSprite {
+	public function loadSheet(path:ModPath, type:TextureType = IsUnknown, displayWarning:Bool = false, ?infos:haxe.PosInfos):BaseSprite {
 		var _path:ModPath = Paths.image(path);
 		var _sheet_path:ModPath = Paths.spritesheet(path);
 		var _type:TextureType = type == IsUnknown ? TextureType.getTypeFromExt(_sheet_path, true) : type;
@@ -85,10 +97,10 @@ class BaseSprite extends #if Animate_Atlas animate.FlxAnimate #else flixel.FlxSp
 				} catch(error:haxe.Exception)
 					try {
 						if (displayWarning)
-							trace('The spritesheet failed to load, using whole image. (path: "${_path.format()}", type: "$_type", error: "${error.message}")');
+							log('The spritesheet failed to load, using whole image. (path: "${_path.format()}", type: "$_type", error: "${error.message}")', WarningMessage, infos);
 						loadImage(path, displayWarning);
 					} catch(error:haxe.Exception)
-						if (displayWarning) trace('The spritesheet failed to load. (path: "${_path.format()}", type: "$_type", error: "${error.message}")');
+						if (displayWarning) log('The spritesheet failed to load. (path: "${_path.format()}", type: "$_type", error: "${error.message}")', ErrorMessage, infos);
 			else loadImage(path, displayWarning);
 		return this;
 	}
@@ -100,7 +112,7 @@ class BaseSprite extends #if Animate_Atlas animate.FlxAnimate #else flixel.FlxSp
 	 * @param displayWarning If true, a warning message will appear.
 	 * @return The sprite itself.
 	 */
-	public function loadAtlas(path:ModPath, ?settings:animate.FlxAnimateFrames.FlxAnimateSettings, displayWarning:Bool = false):BaseSprite {
+	public function loadAtlas(path:ModPath, ?settings:animate.FlxAnimateFrames.FlxAnimateSettings, displayWarning:Bool = false, ?infos:haxe.PosInfos):BaseSprite {
 		var _atlas_path:ModPath = Paths.spritesheet(path, IsAnimateAtlas);
 		if (_atlas_path.isFile) {
 			try {
@@ -108,10 +120,10 @@ class BaseSprite extends #if Animate_Atlas animate.FlxAnimate #else flixel.FlxSp
 			} catch(error:haxe.Exception)
 				try {
 					if (displayWarning)
-						trace('The atlas failed to load, using first spritemap image. (path: "${_atlas_path.format()}", type: "$IsAnimateAtlas", error: "${error.message}")');
+						log('The atlas failed to load, using first spritemap image. (path: "${_atlas_path.format()}", type: "$IsAnimateAtlas", error: "${error.message}")', WarningMessage, infos);
 					loadImage(_atlas_path + 'Animation/spritemap1');
 				} catch(error:haxe.Exception)
-					if (displayWarning) trace('The atlas failed to load. (path: "${_atlas_path.format()}", type: "$IsAnimateAtlas", error: "${error.message}")');
+					if (displayWarning) log('The atlas failed to load. (path: "${_atlas_path.format()}", type: "$IsAnimateAtlas", error: "${error.message}")', ErrorMessage, infos);
 		}
 		return this;
 	}
@@ -130,7 +142,7 @@ class BaseSprite extends #if Animate_Atlas animate.FlxAnimate #else flixel.FlxSp
 	 * @return The sprite itself.
 	 */
 	#end
-	public function loadTexture(path:ModPath, #if Animate_Atlas ?settings:animate.FlxAnimateFrames.FlxAnimateSettings, #end displayWarning:Bool = false):BaseSprite {
+	public function loadTexture(path:ModPath, #if Animate_Atlas ?settings:animate.FlxAnimateFrames.FlxAnimateSettings, #end displayWarning:Bool = false, ?infos:haxe.PosInfos):BaseSprite {
 		var _path:ModPath = Paths.image(path);
 		var _sheet_path:ModPath = Paths.spritesheet(path);
 		var type:TextureType = TextureType.getTypeFromExt(_sheet_path, true);
@@ -142,24 +154,68 @@ class BaseSprite extends #if Animate_Atlas animate.FlxAnimate #else flixel.FlxSp
 			} catch(error:haxe.Exception) {
 				try {
 					if (displayWarning)
-						trace('The asset failed to load, using whole image. (path: "${_path.format()}", type: "$type", error: "${error.message}")');
+						log('The asset failed to load, using whole image. (path: "${_path.format()}", type: "$type", error: "${error.message}")', WarningMessage, infos);
 					loadImage(path, displayWarning);
 				} catch(error:haxe.Exception)
-					if (displayWarning) trace('The asset failed to load. (path: "${_path.format()}", type: "$type", error: "${error.message}")');
+					if (displayWarning) log('The asset failed to load. (path: "${_path.format()}", type: "$type", error: "${error.message}")', ErrorMessage, infos);
 			}
 		}
 		return this;
 	}
 
-	public function new(x:Float = 0, y:Float = 0, ?sprite:ModPath #if Animate_Atlas, ?settings:animate.FlxAnimateFrames.FlxAnimateSettings #end) {
-		super(x, y);
-		if (sprite != null)
-			loadTexture(sprite, #if Animate_Atlas settings, #end true);
+	public var scripts:ScriptGroup;
+	var scriptsLoaded(default, null):Bool = false;
+	function loadScripting(?paths:Array<ModPath>):Void {
+		if (!scriptsLoaded) {
+			scripts = new ScriptGroup(this);
+			scriptsLoaded = true;
+		}
 
+		var locations:Array<ModPath> = ['top:global']; // recycle an array?
+		if (!paths.isBlank()) locations.merge(paths);
+		paths.putWeak();
+
+		for (sprite in locations)
+			for (script in Script.multiCreate('data/sprites' + sprite))
+				scripts.add(script);
+
+		locations.put();
+		scripts.load();
+	}
+
+	public function new(x:Float = 0, y:Float = 0, ?sprite:ModPath, ?scripts:Array<ModPath> #if Animate_Atlas, ?settings:animate.FlxAnimateFrames.FlxAnimateSettings #end) {
+		super(x, y);
+		loadScripting(scripts);
+		_create(); this.scripts.call('onCreate');
+
+		if (sprite != null) loadTexture(sprite, #if Animate_Atlas settings, #end true);
+
+		_createPost(); this.scripts.call('onCreatePost');
+	}
+	// FOR INTERNAL USE ONLY!! Override these to ensure script call order.
+	function _create():Void {}
+	function _createPost():Void {
 		animation.onFinish.add(name -> {
-			if (animation.exists('$name-loop'))
+			if (!debugMode && animation.exists('$name-loop'))
 				playAnimation('$name-loop');
 		});
+	}
+
+	override function update(delta:Float):Void {
+		_preUpdate(delta);
+		super.update(delta);
+		_update(delta);
+		_updatePost(delta);
+	}
+	// FOR INTERNAL USE ONLY!! Override these to ensure script call order.
+	function _preUpdate(delta:Float):Void {
+		scripts.call('onPreUpdate', [delta]);
+	}
+	function _update(delta:Float):Void {
+		scripts.call('onUpdate', [delta]);
+	}
+	function _updatePost(delta:Float):Void {
+		scripts.call('onUpdatePost', [delta]);
 	}
 
 	/**
@@ -174,11 +230,15 @@ class BaseSprite extends #if Animate_Atlas animate.FlxAnimate #else flixel.FlxSp
 	 * @param flipY If true, the animation will flipped on the Y axis.
 	 */
 	public function addAnimation(name:String, tag:String, ?indices:Array<Int>, ?offset:FlxPoint, fps:Float = 24, loop:Bool = false, flipX:Bool = false, flipY:Bool = false):Void {
+		name = name.trim();
 		if (indices.isBlank())
 			animation.addByPrefix(name, tag, fps, loop, flipX, flipY);
 		else animation.addByIndices(name, tag, indices, '', fps, loop, flipX, flipY);
-		if (offset != null)
+
+		if (offset != null) {
 			animation.getByName(name).offset.copyFrom(offset);
+			offset.putWeak();
+		}
 	}
 	/**
 	 * Adds an animation from a sliced image.
@@ -191,9 +251,13 @@ class BaseSprite extends #if Animate_Atlas animate.FlxAnimate #else flixel.FlxSp
 	 * @param flipY If true, the animation will flipped on the Y axis.
 	 */
 	public function addSlicedAnimation(name:String, frames:Array<Int>, ?offset:FlxPoint, fps:Float = 24, loop:Bool = false, flipX:Bool = false, flipY:Bool = false):Void {
+		name = name.trim();
 		animation.add(name, frames, fps, loop, flipX, flipY);
-		if (offset != null)
+
+		if (offset != null) {
 			animation.getByName(name).offset.copyFrom(offset);
+			offset.putWeak();
+		}
 	}
 	#if Animate_Atlas
 	/**
@@ -209,6 +273,7 @@ class BaseSprite extends #if Animate_Atlas animate.FlxAnimate #else flixel.FlxSp
 	 * @param flipY If true, the animation will flipped on the Y axis.
 	 */
 	public function addAtlasAnimation(name:String, tag:String, label:Bool = false, ?indices:Array<Int>, ?offset:FlxPoint, fps:Float = 24, loop:Bool = false, flipX:Bool = false, flipY:Bool = false):Void {
+		name = name.trim();
 		if (label)
 			if (indices.isBlank())
 				anim.addByFrameLabel(name, tag, fps, loop, flipX, flipY);
@@ -217,8 +282,11 @@ class BaseSprite extends #if Animate_Atlas animate.FlxAnimate #else flixel.FlxSp
 			if (indices.isBlank())
 				anim.addBySymbol(name, tag, fps, loop, flipX, flipY);
 			else anim.addBySymbolIndices(name, tag, indices, fps, loop, flipX, flipY);
-		if (offset != null)
+
+		if (offset != null) {
 			animation.getByName(name).offset.copyFrom(offset);
+			offset.putWeak();
+		}
 	}
 	#end
 
@@ -246,19 +314,25 @@ class BaseSprite extends #if Animate_Atlas animate.FlxAnimate #else flixel.FlxSp
 	 * @param frame The frame for the animation to start at.
 	 */
 	public function playAnimation(name:String, force:Bool = true, context:AnimationContext = Unclear, reverse:Bool = false, frame:Int = 0):Void {
-		var suffixes:Array<String> = name.trimSplit('-');
-		var contextualSuffix:Null<String> = getSuffixViaContext(context);
+		var event = scripts.event('uponPlayAnimation', PlayAnimationEvent.recycle(name, force, context, reverse, frame));
+		if (event.name.isBlank()) {
+			_log('[BaseSprite.playAnimation] The animation name can\'t be blank!', DebugMessage);
+			return;
+		}
+		var suffixes:Array<String> = event.name.trimSplit('-').prune(string -> !string.isBlank());
+		var contextualSuffix:Null<String> = getSuffixViaContext(event.context);
 		if (!contextualSuffix.isBlank()) suffixes.push(contextualSuffix);
 		while (!suffixes.isBlank()) {
 			var _name:String = suffixes.join('-'); suffixes.pop();
 			if (animation.exists(_name)) {
-				animation.play(_name, force, reverse, frame);
-				animationContext = context;
+				animation.play(_name, event.force, event.reverse, event.frame);
+				animationContext = event.context;
 				break;
 			}
-			if (debugMode) break;
+			if (debugMode || !event.doSuffixChecks)
+				break;
 		}
-		suffixes.clear();
+		suffixes.put();
 	}
 
 	var _scaledFrameOffset:FlxPoint;
@@ -301,6 +375,7 @@ class BaseSprite extends #if Animate_Atlas animate.FlxAnimate #else flixel.FlxSp
 	}
 
 	override function destroy():Void {
+		scripts.destroy();
 		_scaledFrameOffset.put();
 		super.destroy();
 	}

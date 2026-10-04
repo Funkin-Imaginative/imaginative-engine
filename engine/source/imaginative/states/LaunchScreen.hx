@@ -13,6 +13,7 @@ class LaunchScreen extends GameState {
 	override function create():Void {
 		if (!game_boot) @:privateAccess {
 			game_boot = true;
+			Logs.init();
 
 			Moonchart.DEFAULT_DIFF = 'normal';
 			Moonchart.init();
@@ -26,6 +27,7 @@ class LaunchScreen extends GameState {
 			FlxG.fixedTimestep = false;
 			flixel.FlxSprite.defaultAntialiasing = true; // this ain't a pixel game... yeah ik week 6 exists!
 			FlxG.signals.preStateCreate.add(state -> {
+				ArrayUtil._pool.pool.clear();
 				cpp.vm.Gc.run(false);
 				cpp.vm.Gc.compact();
 				Game.state.preCreate();
@@ -55,7 +57,7 @@ class LaunchScreen extends GameState {
 				trace(stateName);
 				if (Game.stateRedirects.exists(stateName)) {
 					var classResolve = Type.resolveClass(Game.stateRedirects.get(stateName));
-					FlxG.game._nextState = classResolve != null ? Type.createInstance(classResolve, []) : new ModdedState(Game.stateRedirects.get(stateName));
+					FlxG.game._nextState = classResolve != null ? Type.createInstance(classResolve, ArrayUtil.recycle()) : new ModdedState(Game.stateRedirects.get(stateName));
 				}
 			}); */
 		}

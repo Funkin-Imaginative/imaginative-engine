@@ -31,7 +31,7 @@ enum abstract ModType(String) {
 	 */
 	var ALL = 'all';
 	/**
-	 * "FALLBACK" and "MASTER.
+	 * "FALLBACK" and "MASTER".
 	 */
 	var TOP = 'top';
 	/**
@@ -242,20 +242,20 @@ abstract ModPath(String) {
 				if (parts[0].startsWith('[')) {
 					if (parts[0].endsWith(']')) {
 						var result:TModPath = {moduleId: null, type: parts[0].substr(1).substr(0, -1).trim().ifBlankReplace(ALL), path: FilePath.removeTrailingSlashes(parts[1])}
-						parts.clear();
+						parts.put();
 						return result;
 					}
 					if (parts[1].endsWith(']')) {
 						var result:TModPath = {moduleId: parts[1].substr(0, -1).trim(), type: parts[0].substr(1).trim().ifBlankReplace(ALL), path: FilePath.removeTrailingSlashes(parts[2])}
-						parts.clear();
+						parts.put();
 						return result;
 					}
 				}
 				var result:TModPath = {moduleId: null, type: parts[0].trim().ifBlankReplace(ALL), path: FilePath.removeTrailingSlashes(parts[1])}
-				parts.clear();
+				parts.put();
 				return result;
 			} catch(error:haxe.Exception)
-				trace(error);
+				_log('[Paths.ModPath.resolve] ${error.message}', ErrorMessage);
 		}
 		return {moduleId: null, type: ALL, path: FilePath.removeTrailingSlashes(path)}
 	}
@@ -335,24 +335,24 @@ class Paths {
 		if (result.isBlank() && ModType.pathCheck(MODULE, type))
 			if (pathExists(check = new Modpath(moduleId.isBlank() ? Modding.getModsRoot(path) : 'modules/$moduleId/$path', ROOT)))
 				result = check.path;
-		// trace('MODULE: $result');
+		// _log('MODULE: $result', DebugMessage);
 		if (result.isBlank() && ModType.pathCheck(MASTER, type))
 			if (pathExists(check = new ModPath('mods/${Modding.masterMod}/$path', ROOT)))
 				result = check.path;
-		// trace('MASTER: $result');
+		// _log('MASTER: $result', DebugMessage);
 		if (result.isBlank() && ModType.pathCheck(FALLBACK, type))
 			if (pathExists(check = new ModPath('mods/${Game.fallbackMod}/$path', ROOT)))
 				result = check.path;
-		// trace('FALLBACK: $result');
+		// _log('FALLBACK: $result', DebugMessage);
 		#end
 		if (result.isBlank() && type == ROOT)
 			if (pathExists(check = new ModPath('$path', ROOT)))
 				result = check.path;
-		// trace('ROOT: $result');
+		// _log('ROOT: $result', DebugMessage);
 		if (result.isBlank())
 			if (pathExists(check = new ModPath('assets/$path', ROOT)))
 				result = check.path;
-		// trace('RESULT: $result');
+		// _log('RESULT: $result', DebugMessage);
 
 		return result.ifBlankReplace(path.ifBlankReplace('./'));
 	}
@@ -360,17 +360,16 @@ class Paths {
 	/**
 	 * @param path The mod path.
 	 * @param exts The extensions to filter through.
-	 * @param clearExts If true, the extensions array will be cleared. Useful if the array used is only being used this once.
 	 * @return The flitered path.
 	 */
-	public static function file(path:ModPath, ?exts:Array<String>, clearExts:Bool = false):ModPath {
+	public static function file(path:ModPath, ?exts:Array<String>):ModPath {
 		if (exts.isBlank()) return path;
 		var ogExt:String = path.extension;
 		var result:ModPath = '';
 		for (ext in exts)
 			if (fileExists(result = path.applyExt(ext))) break;
 			else result = path.applyExt(ogExt); // jic
-		if (clearExts) exts.clear();
+		exts.putWeak();
 		return result;
 	}
 
@@ -474,7 +473,7 @@ class Paths {
 	 * @return The desired path.
 	 */
 	inline public static function spritesheet(path:ModPath, type:TextureType = IsUnknown):ModPath
-		return #if Animate_Atlas type == IsAnimateAtlas ? json(image(path + 'Animation')) : #end file(image(path), type == IsUnknown ? TextureType.exts : [TextureType.getExtFromType(type)], type != IsUnknown);
+		return #if Animate_Atlas type == IsAnimateAtlas ? json(image(path + 'Animation')) : #end file(image(path), type == IsUnknown ? TextureType.exts : [TextureType.getExtFromType(type)].weaken());
 
 	public static final audioExts:Array<String> = ['wav', 'ogg', 'mp3'];
 	/**
@@ -508,8 +507,7 @@ class Paths {
 	 */
 	inline public static function vocal(song:ModPath, ?suffix:String, ?variant:String):ModPath {
 		var suffixes:Array<String> = suffix.ifBlankReplace('').trimSplit('-');
-		var result:String = suffixes.isBlank() ? '' : ('-' + suffixes.join('-'));
-		suffixes.clear();
+		var result:String = suffixes.isBlank() ? '' : ('-' + suffixes.join('-')); suffixes.put();
 		return audio('data/songs' + song + '${variant.isBlank() ? '' : 'variations/$variant/'}audio/Voices$result');
 	}
 
@@ -577,12 +575,12 @@ class Paths {
 	 * @return The array of path data.
 	 */
 	public static function readFolder(path:ModPath, ?setExts:Array<String>, recursive:Bool = false):Array<FileModPath> {
-		var files:Array<FileModPath> = [];
+		var files:Array<FileModPath> = ArrayUtil.recycle();
 		if (path.isFolder) {
 			for (item in FileSystem.readDirectory(path.format())) {
 				var data:FileModPath = new FileModPath(FilePath.addTrailingSlash(path.path) + item, path.type, path.moduleId);
 				if (!setExts.isBlank() && setExts.contains(data.extension)) files.push(data);
-				if (recursive && data.toString().isFolder) files.merge(readFolder(data.toString(), setExts, true), true);
+				if (recursive && data.toString().isFolder) files.merge(readFolder(data.toString(), setExts, true).weaken());
 			}
 			// sorts 'em alphabetically
 			files.arraySort((a, b) -> {
@@ -592,7 +590,8 @@ class Paths {
 				if (a > b) return 1;
 				return 0;
 			});
-		} else trace('"${path.format()}" is not a folder.');
+		} else _log('[Paths.readFolder] "${path.format()}" is not a folder.', DebugMessage);
+		setExts.putWeak();
 		return files;
 	}
 

@@ -29,10 +29,8 @@ class TitleScreen extends GameState {
 
 	@:unreflective static final _intro_entry:Array<String> = [];
 	static function getIntroEntry(reload:Bool = false):Array<String> {
-		if (reload || _intro_entry.isBlank()) {
-			_intro_entry.clear();
-			_intro_entry.merge(FlxG.random.getObject(introTextData.texts));
-		}
+		if (reload || _intro_entry.isBlank())
+			_intro_entry.set(FlxG.random.getObject(introTextData.texts));
 		return _intro_entry;
 	}
 
@@ -40,6 +38,11 @@ class TitleScreen extends GameState {
 		played_intro = true;
 		textCamera.visible = false;
 		if (isSkip) camera.flash(FlxColor.WHITE, 4);
+	}
+
+	override function onReset():Void {
+		played_intro = false;
+		super.onReset();
 	}
 
 	override function create():Void {
@@ -76,7 +79,7 @@ class TitleScreen extends GameState {
 
 		introText = new FlxText(0, 160, FlxG.width * 5);
 		introText.setFormat(Paths.font('vcr').format(), 50, CENTER);
-		introText.cameras = [textCamera];
+		introText.cameras = introImage.cameras;
 		introText.screenCenter(X);
 		add(introText);
 
@@ -124,6 +127,8 @@ class TitleScreen extends GameState {
 								introText.text += getIntroEntry()[i] + '\n';
 							else introText.text += '$text\n';
 						}
+						if (introText.text.endsWith('\n'))
+							introText.text = introText.text.substr(0, -1);
 					}
 					if (!Paths.image(imageAsset).isFile) {
 						imageAsset = switch (introText.text.toLowerCase()) {
@@ -131,13 +136,18 @@ class TitleScreen extends GameState {
 							case text if (text.contains('imaginative')): 'root:watermarks/static-logo';
 							default: '';
 						}
+						imageAsset = scriptCall('uponIntroImage', [introText.text, imageAsset], cast ((val, instance, ret) -> {
+							if (Paths.image(ret).isFile) return ret;
+							if (Paths.image(val).isFile) return val;
+							return imageAsset;
+						}));
 					}
 					if (introImage.visible = Paths.image(imageAsset).isFile) {
 						introImage.loadImage(imageAsset);
-						introImage.setGraphicScale(350);
+						introImage.setGraphicScale(350, false);
 						introImage.updateHitbox();
 						introImage.screenCenter();
-						introImage.y += 90;
+						introImage.y += 100;
 					}
 				}
 			}

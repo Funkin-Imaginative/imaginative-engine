@@ -2,6 +2,7 @@ package imaginative.backend.states;
 
 import flixel.FlxCamera;
 import flixel.FlxSubState;
+import imaginative.backend.systems.events.callables.StateEvent;
 
 @:build(imaginative.backend.macro.ForwardMacro.buildMap('conductor', [['time', 'songTime'], ['length', 'songLength']]))
 @:build(imaginative.backend.macro.ForwardMacro.buildList('conductor', [
@@ -50,18 +51,17 @@ class GameState extends FlxSubState implements IConductorReactive {
 	public function new(allowScripts:Bool = true, ?id:String) {
 		super();
 		this.allowScripts = #if Scripting.States allowScripts #else false #end;
-		this.id = id ?? flixel.util.FlxStringUtil.getClassName(this, true);
+		this.id = id ?? this.getClassName(false);
 		persistentUpdate = true;
 	}
 
-	public var stateScripts:Null<ScriptGroup> = null;
+	public var scripts:Null<ScriptGroup>;
 	function loadScripting():Void { // in-case you wanna override this or smth
 		if (!allowScripts) return;
-		add(stateScripts = new ScriptGroup(this));
-		for (script in Script.multiCreate('data/states/$id'))
-			stateScripts.add(script);
-		ArrayUtil.clearLast();
-		stateScripts.load();
+		add(scripts = new ScriptGroup(this));
+		for (script in Script.multiCreate('top:data/states/global')) scripts.add(script);
+		for (script in Script.multiCreate('top:data/states/$id')) scripts.add(script);
+		scripts.load();
 	}
 
 	/**
@@ -72,9 +72,9 @@ class GameState extends FlxSubState implements IConductorReactive {
 	 * @return The functions return value.
 	 */
 	inline public function scriptCall<R>(callback:String, ?arguments:Array<Any>, ?def:ScriptRetCall<R>):Null<R> {
-		if (allowScripts && stateScripts != null)
-			return stateScripts.call(callback, arguments, def);
-		return def.call(stateScripts);
+		if (allowScripts && scripts != null)
+			return scripts.call(callback, arguments, def);
+		return def.call(scripts);
 	}
 	/**
 	 * Runs an event call throughout the state scripts.
@@ -84,8 +84,8 @@ class GameState extends FlxSubState implements IConductorReactive {
 	 * @return The event that was called.
 	 */
 	inline public function eventCall<E:CallableEvent>(callback:String, event:E, ?parentOverride:Any):E {
-		if (allowScripts && stateScripts != null)
-			return stateScripts.event(callback, event, parentOverride);
+		if (allowScripts && scripts != null)
+			return scripts.event(callback, event, parentOverride);
 		return event;
 	}
 
@@ -99,7 +99,7 @@ class GameState extends FlxSubState implements IConductorReactive {
 	}
 	override function create():Void {
 		FlxG.watch.addFunction('State', () -> {
-			var lol = flixel.util.FlxStringUtil.getClassName(this, true);
+			var lol = this.getClassName(false);
 			var result = id != lol ? '$id ($lol)' : id;
 			#if Scripting.States result += ' (${allowScripts ? 'SCRIPTABLE' : 'NO SCRIPTING'})'; #end
 			return result;
@@ -140,29 +140,28 @@ class GameState extends FlxSubState implements IConductorReactive {
 		scriptCall('onUpdate', [delta]);
 	}
 	function updatePost(delta:Float):Void
-		scriptCall('onUpdatePost');
+		scriptCall('onUpdatePost', [delta]);
 
 	override function draw():Void {
-		var event = eventCall('onDraw', CallableEvent.recycle());
-		if (event.cancelled) return;
+		if (eventCall('onDraw', CallableEvent.recycle()).cancelled) return;
 		super.draw(); scriptCall('onDrawPost');
 	}
 
-	override function openSubState(sub:FlxSubState):Void {
-		scriptCall('uponOpeningSubstate', [sub]);
-		if (sub is GameState) {
-			var state:GameState = cast sub;
-			state.parent = this;
-			if (state.freezeParent) {
-				if (state.conductor != conductor)
+	override function openSubState(target:FlxSubState):Void {
+		var event = eventCall('uponOpeningSubstate', StateEvent.recycle(cast target));
+		if (event.cancelled) return;
+		if (event.state is GameState) {
+			event.state.parent = this;
+			if (event.state.freezeParent) {
+				if (event.state.conductor != conductor)
 					conductor.pause();
-				state.parent.persistentUpdate = false;
+				event.state.parent.persistentUpdate = false;
 			}
 		}
-		super.openSubState(sub);
+		super.openSubState(target);
 	}
 	override function closeSubState():Void {
-		scriptCall('uponClosingSubstate', [subState]);
+		if (eventCall('uponClosingSubstate', StateEvent.recycle(cast subState)).cancelled) return;
 		super.closeSubState();
 	}
 	override function resetSubState():Void {
@@ -207,8 +206,7 @@ class GameState extends FlxSubState implements IConductorReactive {
 	}
 
 	override function close():Void {
-		var event = eventCall('onClose', CallableEvent.recycle());
-		if (event.cancelled) return;
+		if (eventCall('onClose', CallableEvent.recycle()).cancelled) return;
 		if (freezeParent) {
 			parent.persistentUpdate = true;
 			if (parent.conductor != conductor)
@@ -256,6 +254,12 @@ class GameState extends FlxSubState implements IConductorReactive {
 	/* override function startOutro(onOutroComplete:() -> Void):Void {
 		onOutroComplete();
 	} */
+
+	// do I even keep this?
+	override function onResize(newWidth:Int, newHeight:Int):Void {
+		super.onResize(newWidth, newHeight);
+		eventCall('onResize', imaginative.backend.systems.events.callables.ResizeEvent.recycle(newWidth, newHeight));
+	}
 
 	override function destroy():Void {
 		if (Conductor.reactors.contains(this))

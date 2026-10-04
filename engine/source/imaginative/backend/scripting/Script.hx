@@ -44,9 +44,7 @@ enum abstract ScriptType(String) {
  */
 class Script extends flixel.FlxBasic { // I would be doing "implements IFlxDestroyable" but being able to add scripts to regular groups is nice :)
 	extern inline static function init():Void {
-		trace('Initializing Scripting');
-
-		GlobalScript.init();
+		_log('Initializing Scripting');
 
 		#if Scripting.Haxe
 		HaxeScript.init();
@@ -57,6 +55,8 @@ class Script extends flixel.FlxBasic { // I would be doing "implements IFlxDestr
 		LuaScript.init();
 		exts.merge(LuaScript.exts);
 		#end
+
+		GlobalScript.init();
 	}
 
 	/**
@@ -90,10 +90,6 @@ class Script extends flixel.FlxBasic { // I would be doing "implements IFlxDestr
 	 * @return The script.
 	 */
 	public static function create(path:ModPath, type:ScriptType = TypeUnknown):Script {
-		#if debug
-		if (!Paths.script(path, type).isFile)
-			trace('Script file doesn\'t exist. (path: "${path.format()}")');
-		#end
 		#if Scripting.Haxe
 		if (type == TypeUnknown || type == TypeHaxe)
 			return new HaxeScript(Paths.script(path, TypeHaxe));
@@ -102,6 +98,8 @@ class Script extends flixel.FlxBasic { // I would be doing "implements IFlxDestr
 		if (type == TypeUnknown || type == TypeLua)
 			return new LuaScript(Paths.script(path, TypeLua));
 		#end
+		if (!Paths.script(path, type).isFile)
+			_log('[Script.create] Script file doesn\'t exist. (path: "${Paths.script(path, type).format()}")', DebugMessage);
 		return new Script(Paths.script(path, type));
 	}
 	/**
@@ -113,19 +111,22 @@ class Script extends flixel.FlxBasic { // I would be doing "implements IFlxDestr
 	 */
 	public static function multiCreate(path:ModPath, type:ScriptType = TypeUnknown, includeAllActiveModules:Bool = false):Array<Script> {
 		path.applyExt();
+		var results = ArrayUtil.recycle();
 		#if Scripting
 			#if Modding
-			return [
-				for (ext in exts)
-					for (instance in Modding.getAllInstancesOfFile(path.applyExt(ext)))
-						create(instance.applyExt(), type)
-			].setLast();
+			var _exts = switch (type) {
+				#if Scripting.Haxe case TypeHaxe: HaxeScript.exts; #end
+				#if Scripting.Lua case TypeLua: LuaScript.exts; #end
+				default: exts;
+			}
+			for (ext in _exts)
+				for (instance in Modding.getAllInstancesOfFile(path.applyExt(ext)))
+					results.push(create(instance.applyExt(), type));
 			#else
-			return [create(path, type)].setLast();
+			results.push(create(path, type));
 			#end
-		#else
-		return [].setLast();
 		#end
+		return results;
 	}
 
 	/**
@@ -138,7 +139,7 @@ class Script extends flixel.FlxBasic { // I would be doing "implements IFlxDestr
 	 */
 	public static function createFromString(code:String, language:ScriptType, onCreate:Script -> Void, onLoad:Script -> Void):Script {
 		if (!language.isLang) throw 'Invalid type detected. ($language)';
-		final script:Script = switch (language) {
+		var script:Script = switch (language) {
 			#if Scripting.Haxe case TypeHaxe: new HaxeScript(null, code); #end
 			#if Scripting.Lua case TypeLua: new LuaScript(null, code); #end
 			default: new Script(null, code);
@@ -205,7 +206,7 @@ class Script extends flixel.FlxBasic { // I would be doing "implements IFlxDestr
 	 */
 	public function event<E:CallableEvent>(callback:String, event:E, ?parentOverride:Any):E {
 		if (terminated || !initialized) return event;
-		final oldParent:Any = parent;
+		var oldParent:Any = parent;
 		parent = parentOverride ?? oldParent;
 		call(callback, [event]);
 		parent = oldParent;

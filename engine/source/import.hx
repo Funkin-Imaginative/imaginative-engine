@@ -24,7 +24,10 @@ import imaginative.backend.scripting.ScriptInstance;
 import imaginative.backend.scripting.types.GlobalScript;
 import imaginative.backend.systems.Assets;
 import imaginative.backend.systems.Conductor;
-import imaginative.backend.systems.Modding;
+import imaginative.backend.systems.Logs._log;
+import imaginative.backend.systems.Logs.log;
+import imaginative.backend.systems.Logs;
+#if Modding import imaginative.backend.systems.Modding; #end
 import imaginative.backend.systems.Paths;
 import imaginative.backend.systems.events.CallableEvent;
 import imaginative.backend.utils.PlatformUtil;

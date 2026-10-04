@@ -2,6 +2,7 @@ package imaginative.backend.utils;
 
 import haxe.iterators.StringIterator;
 import haxe.iterators.StringKeyValueIterator;
+import flixel.util.FlxStringUtil;
 
 class StringUtil {
 	// Custom Stuff
@@ -80,7 +81,48 @@ class StringUtil {
 	inline public static function ifBlankReplace(string:String, ?newString:String, trim:Bool = true):Null<String>
 		return string.isBlank(trim) ? newString : string;
 
-	// From StringTools
+	/**
+	 * Stringifies on object.
+	 * @param object The object or class.
+	 * @param addSurrounders If true, depending on the context the output will be wrapped by a specific thing.
+	 * @return The output.
+	 */
+	public static function toStringAdvanced(object:Dynamic, addSurrounders:Bool = false):String {
+		if (object is String) {
+			var output = cast(object, String).replace('\t', '    ').replace('	', '    '); // keep consistant length
+			if (addSurrounders) output = '"$output"';
+			return output;
+		}
+		if (object is Array) {
+			var temp = [for (lol in cast(object, Array<Dynamic>)) lol.toStringAdvanced(true)];
+			var output = inline flixel.util.FlxStringUtil.formatArray(temp);
+			if (addSurrounders) output = '[$output]';
+			temp.put();
+			return output;
+		}
+		if (object is haxe.Constraints.IMap) {
+			var temp = [for (key => value in cast(object, Map<Dynamic, Dynamic>)) key.toStringAdvanced(true) + ' => ' + value.toStringAdvanced(true)];
+			var output = inline flixel.util.FlxStringUtil.formatArray(temp);
+			if (addSurrounders) output = '[$output]';
+			temp.put();
+			return output;
+		}
+		if (object is Class)
+			return '[${object.getClassName()}]';
+		return Std.string(object);
+	}
+
+	// from "flixel.util.FlxStringUtil"
+	/**
+	 * Gets the name of a class from an object or class.
+	 * @param object The object or class.
+	 * @param includePackage If true, it will include the package path.
+	 * @return The class name.
+	 */
+	inline public static function getClassName(object:Dynamic, includePackage:Bool = true):String
+		return FlxStringUtil.getClassName(object, !includePackage);
+
+	// from "StringTools"
 	/**
 	 * Checks if a string contains a set value.
 	 * @param string The string.

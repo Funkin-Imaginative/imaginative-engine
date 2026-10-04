@@ -284,7 +284,7 @@ class Project extends HXProject {
 				setHaxedef('hxscript_verbose');
 				setHaxedef('hxscript_profile');
 			} else setHaxedef('hxscript_no_banner');
-			// setHaxedef('hxscript_bridge_all');
+			setHaxedef('hxscript_host', 'imaginative,Game');
 			setHaxedef('hxscript_cppia');
 			setHaxedef('scriptable');
 		}

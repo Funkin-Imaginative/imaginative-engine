@@ -10,6 +10,8 @@ using haxe.macro.Tools;
 
 class ControlsMacro {
 	inline static macro function build():Array<Field> {
+		Context.info('Building ControlsMacro', Context.currentPos());
+
 		var classFields = Context.getBuildFields();
 		var binds = new Map<String, String>();
 

@@ -22,6 +22,7 @@ class MenuSprite extends FlxSpriteGroup {
 		FlxColor.GRAY => 0xFFE1E1E1
 	];
 
+	var _objects = ArrayUtil.recycle();
 	/**
 	 * Background of the sprite.
 	 */
@@ -34,33 +35,32 @@ class MenuSprite extends FlxSpriteGroup {
 	/**
 	 * @param x The x position.
 	 * @param y The y position.
-	 * @param color FlxColor input.
-	 * @param funkinColor If true, when using FlxColor "YELLOW", "BLUE", "MAGENTA" or "GRAY", it will use the menuBG color instead.
+	 * @param color The color the background should be.
+	 * @param funkinColor If true, when inputting the colors "YELLOW", "BLUE", "MAGENTA" or "GRAY", it will use the specific shades used in the original menu art.
 	 * @param imagePathType The mod path type.
 	 */
 	public function new(x:Float = 0, y:Float = 0, color:FlxColor = FlxColor.YELLOW, funkinColor:Bool = true, imagePathType:ModType = ALL) {
 		super(x, y);
 
-		lineArt = new BaseSprite().loadImage('$imagePathType:menus/bgs/menuArt');
+		lineArt = new BaseSprite().loadImage(new ModPath('menus/bgs/menuArt', imagePathType));
 		blankBg = cast new BaseSprite().makeGraphic(Math.floor(lineArt.width), Math.floor(lineArt.height));
 
 		changeColor(color, funkinColor);
 
-		add(blankBg);
-		add(lineArt);
+		_objects.push(add(blankBg));
+		_objects.push(add(lineArt));
 	}
 
 	/**
 	 * Changes the color of the sprite.
 	 * @param color The new color.
-	 * @param funkinColor If true, depending on the inputted color, it will look like the original funkin bg bg colors.
+	 * @param funkinColor If true, when inputting the colors "YELLOW", "BLUE", "MAGENTA" or "GRAY", it will use the specific shades used in the original menu art.
 	 * @return FlxColor
 	 */
 	public function changeColor(color:FlxColor = FlxColor.YELLOW, funkinColor:Bool = true):FlxColor {
 		lineArt.color = (funkinColor && lineArtColors.exists(color)) ? lineArtColors.get(color) : color - 0xFF646464;
 		return blankBg.color = (funkinColor && blankBgColors.exists(color)) ? blankBgColors.get(color) : color;
 	}
-
 	/**
 	 * Scales the sprite.
 	 * @param x New x scale.
@@ -68,7 +68,7 @@ class MenuSprite extends FlxSpriteGroup {
 	 * @param updateHitbox If true, it updates the hitbox.
 	 */
 	public function updateScale(x:Float = 1, ?y:Float, updateHitbox:Bool = true):Void {
-		for (obj in [blankBg, lineArt]) {
+		for (obj in _objects) {
 			obj.scale.set(x, y ?? x);
 			if (updateHitbox) obj.updateHitbox();
 		}
@@ -80,7 +80,7 @@ class MenuSprite extends FlxSpriteGroup {
 	 * @param updateHitbox If true, it updates the hitbox.
 	 */
 	public function updateSize(width:Int = 0, height:Int = 0, updateHitbox:Bool = true):Void {
-		for (obj in [blankBg, lineArt]) {
+		for (obj in _objects) {
 			obj.setGraphicSize(width, height);
 			if (updateHitbox) obj.updateHitbox();
 		}
@@ -94,9 +94,14 @@ class MenuSprite extends FlxSpriteGroup {
 	 * @param updateHitbox If true, it updates the hitbox.
 	 */
 	public function updateSizeBounded(width:Int = 0, height:Int = 0, fill:Bool = true, maxScale:Float = 0, updateHitbox:Bool = true):Void {
-		for (obj in [blankBg, lineArt]) {
+		for (obj in _objects) {
 			obj.setGraphicScale(width, height, fill, maxScale);
 			if (updateHitbox) obj.updateHitbox();
 		}
+	}
+
+	override function destroy():Void {
+		_objects.put();
+		super.destroy();
 	}
 }

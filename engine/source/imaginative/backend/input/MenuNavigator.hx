@@ -3,8 +3,9 @@ package imaginative.backend.input;
 import flixel.group.FlxGroup;
 import flixel.group.FlxSpriteGroup;
 import flixel.math.FlxMath;
-
 // import flixel.math.FlxPoint;
+import flixel.util.FlxSignal;
+import imaginative.backend.systems.events.callables.menus.SelectionChangeEvent;
 
 typedef MenuNavData = {
 	/**
@@ -16,8 +17,8 @@ typedef MenuNavData = {
 	 */
 	var ?createFunc:(Int, MenuNavItem) -> Bool;
 
-	@:inheritDoc(MenuNavItem.onDeselect) var ?deselectFunc:() -> Void;
-	@:inheritDoc(MenuNavItem.onChange) var ?changeFunc:() -> Void;
+	@:inheritDoc(MenuNavItem.onDeselect) var ?deselectFunc:SelectionChangeEvent -> Void;
+	@:inheritDoc(MenuNavItem.onChange) var ?changeFunc:SelectionChangeEvent -> Void;
 	@:inheritDoc(MenuNavItem.onSelected) var ?selectedFunc:() -> Void;
 }
 
@@ -90,11 +91,11 @@ class MenuNavItem extends FlxSpriteGroup {
 	/**
 	 * The function for when the item is no longer the current selection.
 	 */
-	public var onDeselect:Null<() -> Void> = null;
+	public var onDeselect:Null<SelectionChangeEvent -> Void> = null;
 	/**
 	 * The function for when the item becomes the current selection.
 	 */
-	public var onChange:Null<() -> Void> = null;
+	public var onChange:Null<SelectionChangeEvent -> Void> = null;
 	/**
 	 * The function for when the item is selected.
 	 */
@@ -106,6 +107,8 @@ abstract class BaseMenuNavigator extends FlxTypedGroup<MenuNavItem> {
 	 * The tag used to save and receive from the "savedSelections" map.
 	 */
 	final saveTag:Null<String>;
+	inline function traceTag():String
+		return saveTag.isBlank() ? '[${this.getClassName(false)}]' : '[${this.getClassName(false)} - "$saveTag"]';
 
 	/**
 	 * Whether the navigator can receive input.
@@ -171,7 +174,7 @@ abstract class BaseMenuNavigator extends FlxTypedGroup<MenuNavItem> {
 	public function setCooldown(?duration:Float):FlxTimer {
 		allowSelect = false;
 		duration ??= defaultCooldown;
-		trace('Setting cooldown for $duration seconds.');
+		_log('${traceTag()} Setting cooldown for $duration seconds.', DebugMessage);
 		return cooldownTimer.start(duration, timer -> allowSelect = true);
 	}
 
@@ -206,18 +209,18 @@ class MenuNavigator extends BaseMenuNavigator {
 	@:inheritDoc(BaseMenuNavigator.generateItems)
 	public function generateItems(items:Array<MenuNavData>, ?createFunc:(Int, MenuNavItem) -> Bool):Void {
 		if (!isEmpty()) {
-			trace('List has already been created. (length: $length)');
+			_log('${traceTag()} List has already been created. (length: $length)', WarningMessage);
 			return;
 		}
 		items.prune(data -> !(data == null || data.id.isBlank()));
 		if (items.isBlank()) {
-			trace('Item list is empty.');
+			_log('${traceTag()} Item list is empty.', WarningMessage);
 			return;
 		}
-		trace('List contents are, ${[for (data in items) data.id].cleanDisplayList(true)}');
+		_log('${traceTag()} List contents are, ${[for (data in items) data.id].weaken().cleanDisplayList()}.', DebugMessage);
 
 		var _i:Int = 0;
-		var failed:Array<String> = [];
+		var failed:Array<String> = ArrayUtil.recycle();
 		for (data in items) {
 			var item = new MenuNavItem(this, data.id);
 			if (data.changeFunc != null) item.onChange = data.changeFunc;
@@ -232,19 +235,20 @@ class MenuNavigator extends BaseMenuNavigator {
 				failed.push(data.id);
 			}
 		}
-		items.clear();
+		items.putWeak();
 
 		if (isEmpty())
-			trace('Item list is empty!');
+			_log('${traceTag()} Item list is empty!', WarningMessage);
 		else if (!failed.isBlank())
-			trace('Failed items are, ${failed.cleanDisplayList(true)}.');
+			_log('${traceTag()} Failed items are, ${failed.cleanDisplayList()}.', WarningMessage);
+		failed.put();
 	}
 	@:inheritDoc(BaseMenuNavigator.initSelection)
 	public function initSelection():Void {
 		if (saveTag != null && savedSelections.exists(saveTag))
 			changeSelection(savedSelections.get(saveTag), true);
 		else changeSelection(0);
-		if (currentValue == 0) members[currentValue].onChange();
+		if (currentValue == 0) members[currentValue].onChange(SelectionChangeEvent.recycle(previousValue, currentValue));
 		currentView = currentValue;
 		allowSelect = true;
 	}
@@ -318,24 +322,30 @@ class MenuNavigator extends BaseMenuNavigator {
 	@:unreflective var _recursionTracker:Int = 0;
 	extern inline function wrap(amount:Int, curAmount:Int = 0):Int
 		return FlxMath.wrap(curAmount + amount, 0, length - 1);
+
+	@:unreflective var _stopSound:Bool = true;
+	public final onSelectionChange:FlxTypedSignal<SelectionChangeEvent->Void> = new FlxTypedSignal<SelectionChangeEvent->Void>();
 	public function changeSelection(amount:Int = 0, pureSelect:Bool = false):Void {
 		if (isEmpty()) {
 			currentValue = -1;
-			trace('Cannot change selection, no members exist!');
+			_log('${traceTag()} Cannot change selection, no members exist!', WarningMessage);
 			return;
 		}
 
 		_recursionTracker++;
 		if (_recursionTracker > length) {
-			trace('Recursion detected, setting selection to -1 to prevent stack overflow. (length: $length)');
+			_log('${traceTag()} Recursion detected, setting selection to -1 to prevent stack overflow. (length: $length)', WarningMessage);
 			_recursionTracker = 0; changeSelection(-1, true);
 			return;
 		}
-		final unselected:Bool = amount == -1 && pureSelect;
-		var prevSel = currentValue; var newSel = pureSelect ? (unselected ? -1 : wrap(amount)) : wrap(amount, currentValue);
-		var changeAmount = newSel - prevSel;
+		var unselected:Bool = amount == -1 && pureSelect;
+		var event = SelectionChangeEvent.recycle(currentValue, pureSelect ? (unselected ? -1 : wrap(amount)) : wrap(amount, currentValue));
+		onSelectionChange.dispatch(event);
+		if (_stopSound) // stops it from playing on handler creation
+			event.playSFX = _stopSound = false;
+		else if (unselected) event.playSFX = false;
 
-		var currentItem = members[newSel];
+		var currentItem = members[event.currentValue];
 		if (!unselected && !currentItem.canSelect) {
 			if (!pureSelect)
 				changeSelection(amount + (amount > 0 ? 1 : -1));
@@ -343,29 +353,29 @@ class MenuNavigator extends BaseMenuNavigator {
 		}
 		_recursionTracker = 0;
 
-		previousValue = prevSel == newSel ? previousValue : prevSel;
-		currentValue = newSel;
+		if (event.cancelled) return;
+		previousValue = event.previousValue == event.currentValue ? previousValue : event.previousValue;
+		currentValue = event.currentValue;
 
-
-		if (changeAmount != 0) {
-			FlxG.sound.play(Assets.sound('menus/scroll', true, false, true), 0.7);
-			members[previousValue].onDeselect();
-			currentItem.onChange();
+		if (!event.noChange) {
+			if (event.playSFX) FlxG.sound.play(Assets.sound('menus/scroll', true, false, true), event.sfxVolume);
+			members[previousValue].onDeselect(event);
+			currentItem.onChange(event);
 		}
 	}
 	public function selectCurrent():Void {
 		if (currentValue == -1) {
-			trace('Nothing selected.');
+			_log('${traceTag()} Nothing selected.', DebugMessage);
 			return;
 		}
 		setCooldown();
 
-		final curItem = members[currentValue];
-		trace('Selecting item "${curItem.itemId}". (index: $currentValue)');
+		var curItem = members[currentValue];
+		_log('${traceTag()} Selecting item "${curItem.itemId}". (index: $currentValue)', DebugMessage);
 
 		if (curItem.isLocked) {}
 		else {
-			FlxG.sound.play(Assets.sound('menus/confirm', true, false, true), 0.7);
+			FlxG.sound.play(Assets.sound('menus/confirm', true, false, true), 0.7).persist = true;
 			curItem.onSelected();
 		}
 	}
@@ -377,6 +387,7 @@ class MenuNavigator extends BaseMenuNavigator {
 		if (saveTag != null)
 			savedSelections.set(saveTag, currentValue == -1 ? 0 : currentValue);
 		super.destroy();
+		onSelectionChange.destroy();
 	}
 }
 

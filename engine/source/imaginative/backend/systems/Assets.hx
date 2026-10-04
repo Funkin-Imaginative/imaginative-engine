@@ -85,14 +85,14 @@ class Assets {
 	static final fallbackImage:String = 'flixel/images/logo/default.png';
 	static final fallbackSound:String = 'flixel/sounds/beep.ogg';
 	extern inline static function init():Void {
-		trace('Initializing Assets');
+		_log('Initializing Assets');
 		FlxG.bitmap.add(FlxG.assets.getBitmapData(fallbackImage)).persist = true;
 		FlxG.assets.getSound(fallbackSound);
 
 		inline function _readFolder(path:String, recursive:Bool):Array<String> {
 			var data = Paths.readFolder('root:$path', recursive);
 			var result:Array<String> = [for (lol in data) lol.format()];
-			data.clear();
+			data.put();
 			return result;
 		}
 
@@ -117,16 +117,16 @@ class Assets {
 	 * @param displayWarning If true, a warning message will appear.
 	 * @return Raw text.
 	 */
-	inline public static function text(path:ModPath, cacheType:CacheType = IgnoreCache, displayWarning:Bool = false):String {
+	inline public static function text(path:ModPath, cacheType:CacheType = IgnoreCache, displayWarning:Bool = false, ?infos:haxe.PosInfos):String {
 		var finalPath:String = path.format();
 		if (cacheType == CacheAsset && contentExists(finalPath)) return getContent(path);
 		var asset:String = '';
 		try {
 			asset = path.isFile ? File.getContent(finalPath) : '';
 			if (!asset.isBlank()) addContent(finalPath, asset, cacheType, IsVulnerable);
-			else if (displayWarning) trace('Couldn\'t find "$finalPath".');
+			else if (displayWarning) log('Couldn\'t find "$finalPath".', WarningMessage, infos);
 		} catch(error:haxe.Exception)
-			if (displayWarning) trace('An error occurred when parsing the file. (path: "$finalPath", error: "${error.message}")');
+			if (displayWarning) log('An error occurred when parsing the file. (path: "$finalPath", error: "${error.message}")', ErrorMessage, infos);
 		return asset.ifBlankReplace('');
 	}
 
@@ -137,11 +137,11 @@ class Assets {
 	 * @param displayWarning If true, a warning message will appear.
 	 * @return A dynamic structure. **Can be null,** especially if it doesn't exist.
 	 */
-	inline public static function json(path:ModPath, cacheType:CacheType = IgnoreCache, displayWarning:Bool = false):Null<Dynamic> {
+	inline public static function json(path:ModPath, cacheType:CacheType = IgnoreCache, displayWarning:Bool = false, ?infos:haxe.PosInfos):Null<Dynamic> {
 		var _path:ModPath = Paths.json(path);
 		var finalPath:String = _path.format();
 		if (cacheType == CacheAsset && contentExists(finalPath)) return getContent(path);
-		var data:Dynamic = rawJson(text(_path), _path, displayWarning);
+		var data:Dynamic = rawJson(text(_path), _path, displayWarning, infos);
 		if (data != null) addContent(finalPath, data, cacheType, IsVulnerable);
 		return data;
 	}
@@ -152,13 +152,13 @@ class Assets {
 	 * @param displayWarning If true, a warning message will appear.
 	 * @return A dynamic structure. **Can be null.**
 	 */
-	inline public static function rawJson(contents:String, ?path:ModPath, displayWarning:Bool = false):Null<Dynamic> {
+	inline public static function rawJson(contents:String, ?path:ModPath, displayWarning:Bool = false, ?infos:haxe.PosInfos):Null<Dynamic> {
 		var data:Dynamic = null;
 		try {
 			data = haxe.Json.parse(contents);
 		} catch(error:haxe.Exception) if (displayWarning) {
 			var errorPath:String = StringUtil.isBlank(path) ? '' : path.format(); // wouldn't work with using
-			trace('An error occurred when parsing the json. (${errorPath.isBlank() ? '' : 'path: "$errorPath", '}error: "${error.message}")');
+			log('An error occurred when parsing the json. (${errorPath.isBlank() ? '' : 'path: "$errorPath", '}error: "${error.message}")', ErrorMessage, infos);
 		}
 		return data;
 	}
@@ -171,13 +171,13 @@ class Assets {
 	 * @param displayWarning If true, a warning message will appear.
 	 * @return The image data.
 	 */
-	public static function image(path:ModPath, cacheType:CacheType = CacheAsset, persistenceType:PersistenceType = IsVulnerable, displayWarning:Bool = false):FlxGraphic {
+	public static function image(path:ModPath, cacheType:CacheType = CacheAsset, persistenceType:PersistenceType = IsVulnerable, displayWarning:Bool = false, ?infos:haxe.PosInfos):FlxGraphic {
 		var _path:ModPath = Paths.image(path);
 		var finalPath:String = _path.format();
 
 		if (!_path.isFile) {
 			if (displayWarning)
-				trace('Image asset couldn\'t be found, falling back to the flixel logo. (path: "$finalPath")');
+				log('Image asset couldn\'t be found, falling back to the flixel logo. (path: "$finalPath")', ErrorMessage, infos);
 			return FlxG.bitmap.get(fallbackImage);
 		}
 		if (cacheType == CacheAsset && contentExists(finalPath))
@@ -190,17 +190,17 @@ class Assets {
 		return asset;
 	}
 
-	static function _audio(path:ModPath, beepWhenNull:Bool, streamIt:Bool, cacheType:CacheType, persistenceType:PersistenceType, displayWarning:Bool):Sound {
+	static function _audio(path:ModPath, beepWhenNull:Bool, streamIt:Bool, cacheType:CacheType, persistenceType:PersistenceType, displayWarning:Bool, ?infos:haxe.PosInfos):Sound {
 		var finalPath:String = path.format();
 
 		if (!path.isFile) {
 			if (beepWhenNull) {
 				if (displayWarning)
-					trace('Audio asset couldn\'t be found, falling back to the flixel beep sound. (path: "$finalPath")');
+					log('Audio asset couldn\'t be found, falling back to the flixel beep sound. (path: "$finalPath")', WarningMessage, infos);
 				return FlxG.assets.getSound(fallbackSound, true);
 			}
 			if (displayWarning)
-				trace('Audio asset couldn\'t be found. (path: "$finalPath")');
+				log('Audio asset couldn\'t be found. (path: "$finalPath")', ErrorMessage, infos);
 		}
 		if (cacheType == CacheAsset && contentExists(finalPath))
 			return getContent(finalPath);

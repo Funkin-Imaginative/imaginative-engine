@@ -15,11 +15,17 @@ private class HxScript extends hxscript.Script {
 		if (interp == null) throw 'Interpreter is uninitialized';
 		var fun = (variables.get(variable) ?? interp.getLocal(variable));
 		if (!Reflect.isFunction(fun)) return null;
-		return Reflect.callMethod(interp, fun, args ?? []);
+		try {
+			args ??= ArrayUtil.recycle();
+			var result = Reflect.callMethod(interp, fun, args);
+			args.put();
+			return result;
+		} catch(error:haxe.Exception) log(error.message, ErrorMessage, FromHaxe, interp.posInfos());
+		return null;
 	}
 
 	extern inline function addImport(cls:Class<Any>, ?as:String):Void
-		interp.imports.set(as ?? flixel.util.FlxStringUtil.getClassName(cls, true), cls);
+		interp.imports.set(as ?? cls.getClassName(false), cls);
 	extern inline function addUsing(cls:Class<Any>):Void
 		if (!interp.usings.contains(cls))
 			interp.usings.push(cls);
@@ -62,7 +68,7 @@ private class ImagInterp extends hxscript.runtime.Interp {
 @:allow(imaginative.backend.scripting.Script)
 class HaxeScript extends Script {
 	extern inline static function init():Void {
-		trace('Initializing Haxe Scripting');
+		_log('Initializing Haxe Scripting');
 		HxConfig.strictAccess = true;
 		HxConfig.interpClass = ImagInterp;
 		HxConfig.blacklist.get(ByPackage(true)).push('hxp');
@@ -81,8 +87,8 @@ class HaxeScript extends Script {
 	var internal_script:HxScript;
 	override function setup():Void {
 		internal_script = new HxScript(this, Assets.text(filePath.toString()), filePath.format(), new Environment());
-		internal_script.onParsingError = error -> trace(error);
-		internal_script.onProgramError = error -> trace(error);
+		internal_script.onParsingError = error -> _log(error, ErrorMessage);
+		internal_script.onProgramError = error -> _log(error, ErrorMessage);
 		super.setup();
 	}
 

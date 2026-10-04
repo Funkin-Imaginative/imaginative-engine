@@ -8,15 +8,15 @@ typedef Key = Null<FlxKey>;
 abstract KeyList(Array<Key>) from Array<Key> to Array<Key> {
 	inline public function set(list:KeyList):Void {
 		list.prune(key -> !(key == ANY || key == NONE || key == null));
-		if (list.isBlank()) trace('Cannot give an empty list. Check if your list contains invalid keys.');
+		if (list.isBlank()) _log('[Controls.KeyList] Cannot give an empty list. Check if your list contains invalid keys.', DebugMessage);
 		else this.set(list);
 	}
 
 	inline public function add(key:Key):Void {
 		if (key == ANY || key == NONE || key == null)
-			trace('Cannot add "$key" to a KeyList.');
+			_log('[Controls.KeyList] Cannot add "$key" to a KeyList.', ErrorMessage);
 		else if (!this.contains(key)) this.push(key);
-		else trace('Already contains "$key".');
+		else _log('[Controls.KeyList] Already contains "$key".', DebugMessage);
 	}
 
 	@:inheritDoc(Array.copy) // ensures typing on clone
@@ -132,7 +132,7 @@ class PlayerInput extends UserInput {
 class Controls {
 	extern inline static function init():Void {
 		// TODO: Save data junk.
-		trace('Initializing Controls');
+		_log('Initializing Controls');
 
 		global.binds.set(UI_LEFT, [A, LEFT]);
 		global.binds.set(UI_DOWN, [S, DOWN]);
@@ -224,7 +224,7 @@ abstract class UserInput extends flixel.FlxBasic #if Scripting.Haxe.IGNORE imple
 	extern inline function bindCheck(bind:Bind):Null<KeyList> {
 		if (!active) return null;
 		if (binds.exists(bind)) return binds.get(bind);
-		trace('$id: Bind "$bind" not found.');
+		_log('$id: Bind "$bind" not found.', DebugMessage);
 		return null;
 	}
 
@@ -236,9 +236,9 @@ abstract class UserInput extends flixel.FlxBasic #if Scripting.Haxe.IGNORE imple
 
 	inline public function clearBinds():Void {
 		for (bind in binds)
-			bind.clear();
+			bind.put();
 		binds.clear();
-		trace('$id: Binds cleared.');
+		_log('$id: Binds cleared.');
 	}
 
 	override function destroy():Void {

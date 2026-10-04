@@ -5,7 +5,7 @@ import flixel.math.FlxMath;
 import flixel.math.FlxPoint;
 
 class MainMenu extends GameState {
-	var itemList:Array<String> = [];
+	var itemList:Array<String> = ArrayUtil.recycle();
 	var itemData:Array<MenuNavData> = [
 		{
 			id: 'storymode',
@@ -44,6 +44,11 @@ class MainMenu extends GameState {
 	@:unreflective var highestY:Float = 0;
 	@:unreflective var lowestY:Float = 0;
 
+	override function onReset():Void {
+		conductor.stop();
+		super.onReset();
+	}
+
 	override function preCreate():Void {
 		itemData.find(data -> data.id == 'options').selectedFunc = () -> {
 			menuItems.setCooldown(0.5); // extend cooldown
@@ -56,11 +61,10 @@ class MainMenu extends GameState {
 		super.preCreate();
 
 		var lePath = Paths.image('menus/main');
-		var lol = Paths.readFolder(lePath.applyExt(), ['xml'], true);
-		for (file in lol)
-			itemList.push(file.file.getSlice('/', -1));
-		itemList.sortByList(Assets.text(Paths.txt(lePath + 'order'), true).trimSplit('\n'));
-		lol.clear();
+		var lol = Paths.readFolder(lePath.applyExt(), ['xml'].weaken(), true);
+		for (file in lol) itemList.push(file.file.getSlice('/', -1));
+		itemList.sortByList(Assets.text(Paths.txt(lePath + 'order'), true).trimSplit('\n').weaken());
+		lol.put();
 	}
 	override function create():Void {
 		if (!conductor.playing) {
@@ -73,7 +77,8 @@ class MainMenu extends GameState {
 		stateCamera.follow(camPoint = new FlxObject(0, 0, 1, 1), 0.2);
 		add(camPoint);
 
-		bg = new MenuSprite();
+		var event = eventCall('uponMenuBackgroundCreation', MenuBackgroundEvent.recycle());
+		bg = new MenuSprite(event.color, event.funkinColor, event.imagePathType);
 		bg.scrollFactor.set();
 		bg.updateScale(1.2);
 		bg.screenCenter();
@@ -81,8 +86,9 @@ class MainMenu extends GameState {
 		add(bg);
 
 		menuItems = new MenuNavigator(id, false);
+		menuItems.onSelectionChange.add(event -> eventCall('uponSelectionChange', event));
 		menuItems.generateItems(
-			[for (id in itemList) itemData.find(data -> data.id == id)],
+			[for (id in itemList) itemData.find(data -> data.id == id)].weaken(),
 			(index, group) -> {
 				var id = group.itemId;
 				if (!Paths.spritesheetExists('menus/main/$id'))
@@ -113,8 +119,8 @@ class MainMenu extends GameState {
 						group.isLocked = true;
 				}
 
-				group.onChange = () -> item.playAnimation('selected');
-				group.onDeselect = () -> item.playAnimation('idle');
+				group.onChange = event -> item.playAnimation('selected');
+				group.onDeselect = event -> item.playAnimation('idle');
 
 				group.screenCenter(X);
 				group.y = 60 + (index * 160);
@@ -146,8 +152,11 @@ class MainMenu extends GameState {
 		super.update(delta);
 
 		if (Controls.global.back && (menuItems.isEmpty() ? true : menuItems.allowSelect)) {
-			FlxG.sound.play(Assets.sound('menus/cancel', true, false, true), 0.7).persist = true;
-			Game.switchState(() -> new TitleScreen());
+			var event = eventCall('uponExitingMenu', MenuSFXEvent.recycle());
+			if (!event.cancelled) {
+				if (event.playSFX) FlxG.sound.play(Assets.sound('menus/cancel', true, false, true), event.sfxVolume).persist = true;
+				Game.switchState(() -> new TitleScreen());
+			}
 		}
 
 		var range:Float = FlxMath.remapToRange(menuItems.currentView, 0, menuItems.length - 1, 0, 1);

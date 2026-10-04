@@ -36,7 +36,7 @@ class Modding {
 			var asset:ModPath = new ModPath('modules/$mod/$modPath', ROOT);
 			if (asset.isFile) return asset.path;
 		}
-		mods.clear();
+		mods.put();
 		return modPath;
 	}
 
@@ -47,7 +47,7 @@ class Modding {
 	 * @return The filtered paths.
 	 */
 	public static function getAllInstancesOfFile(path:ModPath, includeAllActiveModules:Bool = false):Array<ModPath> {
-		return []; // TODO: actually write this
+		return ArrayUtil.recycle(); // TODO: actually write this
 	}
 }
 #end

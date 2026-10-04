@@ -10,7 +10,7 @@ using haxe.macro.ExprTools;
 
 class Macro {
 	inline static function init():Void {
-		trace('Initializing Macros');
+		Context.info('Initializing Macros', Context.currentPos());
 
 		var classPath:String = Std.string(Macro).replace('Class<', '').replace('>', '');
 		Compiler.addMetadata('@:build($classPath.buildOntoFlxG())', 'flixel.FlxG');

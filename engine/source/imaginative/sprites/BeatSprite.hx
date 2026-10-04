@@ -12,7 +12,7 @@ class BeatSprite extends BaseSprite implements IConductorReactive {
 	 */
 	public var danceEvery(default, set):BeatTimes;
 	@:noCompletion inline function set_danceEvery(value:BeatTimes):BeatTimes {
-		if (value == MILLISECONDS) trace('"danceEvery" can\'t be in milliseconds!');
+		if (value == MILLISECONDS) _log('[BeatSprite.set_danceEvery] "danceEvery" can\'t be in milliseconds!', DebugMessage);
 		return danceEvery = value == MILLISECONDS ? BEATS : value;
 	}
 	/**
@@ -50,8 +50,8 @@ class BeatSprite extends BaseSprite implements IConductorReactive {
 		return this;
 	}
 
-	override function update(delta:Float):Void {
-		super.update(delta);
+	override function _update(delta:Float):Void {
+		super._update(delta);
 		if (!debugMode && !preventDancing && animationContext != IsDancing)
 			if (parentConductor != null)
 				tryDance(switch (danceEvery) {
@@ -81,6 +81,7 @@ class BeatSprite extends BaseSprite implements IConductorReactive {
 	 * @param tick Current dance tick (as in *step*, *beat* and *measure*), used for handling multiple dance animations.
 	 */
 	public function tryDance(tick:Int):Void {
+		if (scripts.event('uponDanceAttempt', CallableEvent.recycle()).cancelled) return;
 		switch (animationContext) {
 			case IsDancing:
 				dance(tick);
@@ -91,18 +92,21 @@ class BeatSprite extends BaseSprite implements IConductorReactive {
 				if (animation.name == null || animation.finished)
 					dance(tick);
 		}
+		scripts.call('onDanceAttempted');
 	}
 	/**
 	 * Triggers the sprite to dance.
 	 * @param tick Current dance tick (as in *step*, *beat* and *measure*), used for handling multiple dance animations.
 	 */
 	public function dance(tick:Int):Void {
-		if (preventDancing) return;
+		if (debugMode || preventDancing) return;
+		if (scripts.event('uponDance', CallableEvent.recycle()).cancelled) return;
 		calculateDanceSteps(danceSuffix);
 		var totalSteps:Int = totalDanceSteps.get(danceSuffix) ?? 1;
 		var danceStep:Int = totalSteps == 0 ? 1 : tick % totalSteps;
 		var danceTag:String = danceStep < 1 ? '' : Std.string(danceStep);
 		playAnimation('dance$danceTag', IsDancing);
+		scripts.call('onDance');
 	}
 	@:unreflective final totalDanceSteps:Map<String, Int> = new Map<String, Int>();
 	extern inline function calculateDanceSteps(?suffix:String):Void {
@@ -115,12 +119,15 @@ class BeatSprite extends BaseSprite implements IConductorReactive {
 	public var parentConductor(default, null):Conductor;
 	function _stepHit(target:Conductor):Void {
 		stepHit(target.curStep, parentConductor = target);
+		scripts.call('onStepHit', [target.curStep, parentConductor]);
 	}
 	function _beatHit(target:Conductor):Void {
 		beatHit(target.curBeat, parentConductor = target);
+		scripts.call('onBeatHit', [target.curBeat, parentConductor]);
 	}
 	function _measureHit(target:Conductor):Void {
 		measureHit(target.curMeasure, parentConductor = target);
+		scripts.call('onMeasureHit', [target.curMeasure, parentConductor]);
 	}
 
 	function stepHit(step:Int, target:Conductor):Void
@@ -140,7 +147,7 @@ class BeatSprite extends BaseSprite implements IConductorReactive {
 				tryDance(tick);
 				if (animationContext != IsDancing && animation.name.endsWith('-loop'))
 					animation.finish();
-			} else if (danceSpeed < 1) trace('Current interval is below 0, please change this.');
+			} else if (danceSpeed < 1) _log('[BeatSprite._tryDance] Current interval is below 0, please change this.', DebugMessage);
 		}
 	}
 }

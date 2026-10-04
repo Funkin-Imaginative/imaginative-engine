@@ -6,7 +6,7 @@ class GlobalScript {
 	public static var scripts:ScriptGroup;
 
 	extern inline static function init():Void {
-		trace('Initializing Global Scripting');
+		_log('Initializing Global Scripting');
 
 		FlxG.signals.focusLost.add(() -> call('onFocusLost'));
 		FlxG.signals.focusGained.add(() -> call('onFocusGained'));
@@ -29,14 +29,14 @@ class GlobalScript {
 
 	static function loadScripting():Void {
 		if (scripts != null) {
-			trace('Destroying Global Scripts');
+			_log('Destroying Global Scripts', DebugMessage);
 			scripts.destroy();
 			scripts = null;
 		}
 		if (scripts == null) {
-			trace('Creating Global Scripts');
+			_log('Creating Global Scripts', DebugMessage);
 			scripts = new ScriptGroup(GlobalScript);
-			var folderPath:ModPath = Paths.script(new ModPath('data/global', TOP));
+			var folderPath:ModPath = Paths.script('top:data/global');
 			if (folderPath.isFile)
 				scripts.add(Script.create(folderPath));
 			else for (data in Paths.readFolder(folderPath, Script.exts, true))

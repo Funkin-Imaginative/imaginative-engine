@@ -111,7 +111,7 @@ class Conductor extends flixel.FlxBasic {
 	public static var charter(default, null):Conductor;
 
 	extern inline static function init():Void {
-		trace('Initializing Conductor');
+		_log('Initializing Conductor');
 		menu = new Conductor('Menu', true);
 		song = new Conductor('Song');
 		cutscene = new Conductor('Cutscene', true);
@@ -207,7 +207,7 @@ class Conductor extends flixel.FlxBasic {
 	 */
 	public var metadata:MusicMeta = {id: 'No Metadata', name: 'No Metadata', composer: 'No Metadata'}
 
-	final checkpoints:Array<CheckpointMeta> = [];
+	final checkpoints:Array<CheckpointMeta> = ArrayUtil.recycle();
 
 	/**
 	 * Dispatches whenever a bpm change has passed.
@@ -308,11 +308,11 @@ class Conductor extends flixel.FlxBasic {
 		FlxG.signals.focusGained.add(onFocus);
 		FlxG.signals.focusLost.add(onFocusLost);
 
-		/* onLoad.add(meta -> trace('Loaded song "${meta.name}" on Conductor "$id".'));
-		onBPMChange.add(checkpoint -> trace('BPM changed to "${checkpoint.bpm}" on Conductor "$id".'));
-		onStepHit.add(step -> trace('Passed step "$step" on Conductor "$id".'));
-		onBeatHit.add(beat -> trace('Passed beat "$beat" on Conductor "$id".'));
-		onMeasureHit.add(measure -> trace('Passed measure "$measure" on Conductor "$id".')); */
+		/* onLoad.add(meta -> _log('Loaded song "${meta.name}" on Conductor "$id".', DebugMessage));
+		onBPMChange.add(checkpoint -> _log('BPM changed to "${checkpoint.bpm}" on Conductor "$id".', DebugMessage));
+		onStepHit.add(step -> _log('Passed step "$step" on Conductor "$id".', DebugMessage));
+		onBeatHit.add(beat -> _log('Passed beat "$beat" on Conductor "$id".', DebugMessage));
+		onMeasureHit.add(measure -> _log('Passed measure "$measure" on Conductor "$id".', DebugMessage)); */
 	}
 
 	/**
@@ -321,6 +321,7 @@ class Conductor extends flixel.FlxBasic {
 	 * @param startVolume The starting volume.
 	 */
 	inline public function play(startTime:Float = 0, startVolume:Float = 1):Void {
+		// TODO: Make it so these arguments can be null.
 		time = startTime;
 		volume = startVolume;
 		playing = true;
@@ -461,7 +462,7 @@ class Conductor extends flixel.FlxBasic {
 			checkpoints.merge(metadata.checkpoints);
 		}
 		if (checkpoints.isBlank()) {
-			trace('No checkpoints detected for "${metadata.name}", double check your shit.');
+			_log('[Conductor._onLoad] No checkpoints detected for "${metadata.name}", double check your shit. (id: "$id")', ErrorMessage);
 			checkpoints.push(new CheckpointMeta(100));
 		}
 		_bpm = initialBPM = checkpoints[0].bpm;
@@ -490,7 +491,7 @@ class Conductor extends flixel.FlxBasic {
 				longestAudio = sound;
 		}
 		if (_printResyncMessage)
-			trace(force ? 'Forced Conductor "$id" to resync.' : 'Conductor "$id" resynced all tracks to it\'s time.');
+			_log(force ? 'Forced Conductor "$id" to resync.' : 'Conductor "$id" resynced all tracks to it\'s time.');
 	}
 	@:unreflective var longestAudio:FlxSound;
 
@@ -583,10 +584,10 @@ class Conductor extends flixel.FlxBasic {
 	extern inline function onConductorComplete():Void {
 		if (canLoop) {
 			play(getTime(loopTime, STEPS, MILLISECONDS), volume);
-			trace('Conductor "$id" has looped.');
+			_log('Conductor "$id" has looped.');
 		} else {
 			pause();
-			trace('Conductor "$id" has finished playing.');
+			_log('Conductor "$id" has finished playing.');
 		}
 	}
 
@@ -712,6 +713,7 @@ class Conductor extends flixel.FlxBasic {
 		onBeatHit.destroy();
 		onMeasureHit.destroy();
 		super.destroy();
+		checkpoints.put();
 	}
 }
 

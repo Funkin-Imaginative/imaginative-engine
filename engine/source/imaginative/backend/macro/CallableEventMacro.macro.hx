@@ -1,6 +1,5 @@
 package imaginative.backend.macro;
 
-import haxe.macro.Compiler;
 import haxe.macro.Context;
 import haxe.macro.Expr;
 import haxe.macro.Type;
@@ -15,7 +14,14 @@ class CallableEventMacro {
 	inline static macro function build():Array<Field> {
 		var classFields = Context.getBuildFields();
 		var cls:ClassType = Context.getLocalClass().get();
-		var clsType:ComplexType = Context.getType('${cls.module}.${cls.name}').toComplexType();
+		var classPath:String = '${cls.module}.${cls.name}';
+		if (classPath.endsWith('ScriptedCallableEvent')) return classFields; // gotta do it manually sadly :(
+		Context.info('Building CallableEventMacro', Context.currentPos());
+		var clsType:ComplexType = Context.getType(classPath).toComplexType();
+
+		var extendedCls:Null<ClassType> = cls.superClass?.t.get();
+		if (extendedCls != null && extendedCls.name != 'CallableEvent' && extendedCls.fields.get().exists(f -> f.name == '_recycle'))
+			Context.warning('You\'ll need to override "_recycle" to get recycling to work properly.', extendedCls.pos);
 
 		var tempClass = macro class TempClass {
 			static var instance(default, null):Null<$clsType>;
@@ -25,13 +31,14 @@ class CallableEventMacro {
 		// gets all fields
 		var values:Array<EventVar> = [];
 		var hiddenValues:Array<EventVar> = [];
-		for(field in classFields) {
+		for (field in classFields) {
 			if (field.access.contains(AStatic)) continue;
 
 			var hidden = false;
 			if (field.meta != null)
 				for (m in field.meta)
-					if (m.name == ':ignore')
+					if (m.name == ':ignore') continue;
+					else if (m.name == ':hidden')
 						hidden = true;
 			if (!field.access.contains(APublic))
 				hidden = true;
@@ -55,6 +62,7 @@ class CallableEventMacro {
 				opt: false,
 				name: a.name
 			}],
+			ret: clsType,
 			expr: {
 				pos: Context.currentPos(),
 				expr: EBlock([])
@@ -74,7 +82,7 @@ class CallableEventMacro {
 
 		switch(func.expr.expr) {
 			case EBlock(exprs):
-				exprs.push(macro if (instance == null) instance = ${Context.parse('new ${cls.module}.${cls.name}()', Context.currentPos())});
+				exprs.push(macro if (instance == null) instance = ${Context.parse('new $classPath()', Context.currentPos())});
 				exprs.push(macro instance._recycle());
 
 				// add a "set this" expr for each variable

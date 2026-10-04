@@ -3,46 +3,95 @@ package imaginative.backend.utils;
 import flixel.util.FlxDestroyUtil;
 import flixel.util.FlxPool;
 
+/**
+ * This *might* be overcomplicated.
+ */
+@:unreflective private class ArrayPool {
+	final exceptions:Array<Array<Dynamic>> = [];
+	final pool:Array<Array<Dynamic>> = []; final weakened:Array<Array<Dynamic>> = [];
+
+	public function new() {
+		exceptions.push(exceptions);
+		exceptions.push(pool);
+		exceptions.push(weakened);
+	}
+
+	public function recycle<T>(weak:Bool = false):Array<T> {
+		for (array in pool) {
+			if (exceptions.contains(array)) {
+				if (isWeak(array)) weakened.remove(array);
+				pool.remove(array);
+				continue;
+			}
+			pool.remove(array);
+			if (weak && !isWeak(array)) weakened.push(array);
+			return cast array;
+		}
+		return [];
+	}
+
+	extern inline public function put(array:Array<Dynamic>):Void {
+		if (!inPool(array)) {
+			array.clear();
+			pool.push(array);
+			if (isWeak(array))
+				weakened.remove(array);
+		}
+	}
+	extern inline public function putWeak(array:Array<Dynamic>):Void
+		if (isWeak(array)) put(array);
+
+	extern inline public function inPool(array:Array<Dynamic>):Bool return pool.contains(array);
+	extern inline public function isWeak(array:Array<Dynamic>):Bool return weakened.contains(array);
+}
+
 class ArrayUtil {
-	static var lastArray:Array<Dynamic> = [];
 	/**
-	 * Sets an array to the last array used.
-	 * @param array The array.
+	 * FlxPool recreation, cause fuck extern classes :bk_dead:
+	 */
+	@:unreflective static final _pool:ArrayPool = new ArrayPool();
+
+	/**
+	 * Recycles an array from the pool.
+	 * @param weak If true, it will be a weak array.
+	 * @return The recycled array.
+	 */
+	public static function recycle<T>(weak:Bool = false):Array<T>
+		return _pool.recycle(weak);
+	/**
+	 * Makes a pre-existing array weak.
+	 * @param array The array to make weak.
 	 * @return The array itself.
 	 */
-	inline public static function setLast<T>(array:Array<T>):Array<T> {
-		lastArray = array;
+	inline public static function weaken<T>(array:Array<T>):Array<T> {
+		if (!_pool.isWeak(array))
+			@:privateAccess _pool.weakened.push(array);
 		return array;
-	}
-	/**
-	 * Clears the last array used.
-	 */
-	inline public static function clearLast():Void
-		lastArray.clear();
-	/**
-	 * Same as "clearLast" function, but if any objects are destroyable, then they will be destroyed.
-	 */
-	inline public static function destroyLast():Void {
-		lastArray.destroy();
-	}
-	/**
-	 * Same as "clearLast" function, but if any objects are poolable, then they will be put back into the pool.
-	 * @param isWeak If true, it will put weak ones.
-	 */
-	@:noUsing inline public static function putLast(isWeak:Bool = false):Void {
-		lastArray.put(isWeak);
 	}
 
 	/**
+	 * Puts an array back into the pool.
+	 * @param array The array to put back into the pool.
+	 */
+	inline public static function put(array:Array<Dynamic>):Void
+		_pool.put(array);
+	/**
+	 * Puts an array back into the pool if it's weakened.
+	 * @param array The array to put back into the pool.
+	 */
+	inline public static function putWeak(array:Array<Dynamic>):Void
+		_pool.putWeak(array);
+
+	// Custom Stuff
+	/**
 	 * Returns a clean display list for quickly tracing a list.
 	 * @param array The array.
-	 * @param clear If true, it resizes the array to 0.
 	 * @return The display list.
 	 */
-	inline public static function cleanDisplayList(array:Array<String>, clear:Bool = false):String {
-		var result = '${[for (i => item in array) (i == (array.length - 2) && !array.isBlank()) ? '"$item" and' : '"$item"'].setLast().join(', ').replace('and,', 'and')}';
-		if (clear) array.clear();
-		clearLast();
+	inline public static function cleanDisplayList(array:Array<String>):String {
+		var temp = [for (i => item in array) (i == (array.length - 2) && !array.isBlank()) ? '"$item" and' : '"$item"'];
+		var result = '${temp.join(', ').replace('and,', 'and')}';
+		array.putWeak(); temp.put();
 		return result;
 	}
 
@@ -57,12 +106,10 @@ class ArrayUtil {
 	 * @param array The array to sort.
 	 * @param list The list to sort by.
 	 * @param keepUnlisted Whether to keep items that aren't referenced in the main array.
-	 * @param clearList If true, it resizes list to 0.
-	 * @param recursive If true, it will recursively clear any arrays within the list.
 	 */
-	public static function sortByList<T>(array:Array<T>, list:Array<T>, keepUnlisted:Bool = false, clearList:Bool = true, recursive:Bool = true):Void {
+	public static function sortByList<T>(array:Array<T>, list:Array<T>, keepUnlisted:Bool = false):Void {
 		if (!array.isBlank() && !list.isBlank()) {
-			var newArray:Array<T> = [];
+			var newArray:Array<T> = ArrayUtil.recycle();
 			for (n in list)
 				for (i in array)
 					if (n == i)
@@ -73,7 +120,7 @@ class ArrayUtil {
 						newArray.push(i);
 			array.set(newArray);
 		}
-		if (clearList) list.clear(recursive);
+		list.putWeak();
 	}
 
 	/**
@@ -84,7 +131,7 @@ class ArrayUtil {
 	 */
 	inline public static function set<T>(array:Array<T>, content:Array<T>):Array<T> {
 		array.clear();
-		array.merge(content, true);
+		array.merge(content.weaken());
 		return array;
 	}
 
@@ -92,13 +139,11 @@ class ArrayUtil {
 	 * Pushes all of array B into array A.
 	 * @param a The first array.
 	 * @param b The second array.
-	 * @param clearB If true, it resizes array B to 0.
-	 * @param recursive If true, it will recursively clear any arrays within array B.
 	 * @return Array a.
 	 */
-	inline public static function merge<T>(a:Array<T>, b:Array<T>, clearB:Bool = false, recursive:Bool = true):Array<T> {
+	inline public static function merge<T>(a:Array<T>, b:Array<T>):Array<T> {
 		for (i in b) a.push(i);
-		if (clearB) b.clear(recursive);
+		b.putWeak();
 		return a;
 	}
 
@@ -124,11 +169,11 @@ class ArrayUtil {
 	 * @param array The array.
 	 * @param recursive If true, it will recursively clear any arrays within the array.
 	 */
-	public static function clear<T>(array:Array<T>, recursive:Bool = true):Void {
+	public static function clear<T>(array:Array<T>, recursive:Bool = false):Void {
 		while (!array.isBlank()) {
 			var item = array.pop();
 			if (recursive && item is Array)
-				clear(cast item);
+				clear(cast item, true);
 		}
 		array.resize(0); // jic
 	}
@@ -136,7 +181,7 @@ class ArrayUtil {
 	 * Same as "clear" function, but if any objects are destroyable, then they will be destroyed.
 	 * @param array The array.
 	 */
-	inline public static function destroy<T:IFlxDestroyable>(array:Array<T>):Void {
+	inline public static function destroyItems<T:IFlxDestroyable>(array:Array<T>):Void {
 		while (!array.isBlank())
 			array.pop().destroy();
 		array.clear();
@@ -144,11 +189,11 @@ class ArrayUtil {
 	/**
 	 * Same as "clear" function, but if any objects are poolable, then they will be put back into the pool.
 	 * @param array The array.
-	 * @param isWeak If true, it will put weak ones.
+	 * @param weak If true, it will put weak ones.
 	 */
-	inline public static function put<T:IFlxPooled>(array:Array<T>, isWeak:Bool = false):Void {
+	inline public static function putItems<T:IFlxPooled>(array:Array<T>, weak:Bool = false):Void {
 		while (!array.isBlank())
-			if (isWeak) array.pop().putWeak();
+			if (weak) array.pop().putWeak();
 			else array.pop().put();
 		array.clear();
 	}

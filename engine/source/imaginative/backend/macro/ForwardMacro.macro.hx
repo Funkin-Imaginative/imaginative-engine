@@ -10,6 +10,8 @@ using haxe.macro.Tools;
 
 class ForwardMacro {
 	inline static macro function buildMap(variable:String, properties:Array<Array<String>>):Array<Field> {
+		Context.info('Building ForwardMacro [MAP]', Context.currentPos());
+
 		var classFields = Context.getBuildFields();
 		var variableType = getFieldType(classFields, variable);
 		for (_ in properties) {
@@ -33,6 +35,8 @@ class ForwardMacro {
 	}
 
 	inline static macro function buildList(variable:String, properties:Array<String>):Array<Field> {
+		Context.info('Building ForwardMacro [LIST]', Context.currentPos());
+
 		var classFields = Context.getBuildFields();
 		var variableType = getFieldType(classFields, variable);
 		for (property in properties) {
