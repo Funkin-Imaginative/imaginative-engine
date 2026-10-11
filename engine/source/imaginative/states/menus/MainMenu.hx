@@ -95,7 +95,7 @@ class MainMenu extends GameState {
 					return false;
 
 				// TODO: Eventually switch to object jsons. Use script event call for people to able to do their own thing if need be.
-				var item:BaseSprite = new BaseSprite(0, 0, 'menus/main/$id');
+				var item:BaseSprite = new BaseSprite('menus/main/$id');
 				item.addAnimation('idle', '$id idle', true);
 				item.addAnimation('selected', '$id selected', true);
 				item.animation.onPlay.add((_, _, _, _) -> {

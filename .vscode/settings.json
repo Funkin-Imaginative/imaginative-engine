@@ -27,5 +27,8 @@
 	"files.trimTrailingWhitespace": true,
 
 	"haxe.enableExtendedIndentation": true,
-	"haxe.importsSortOrder": "stdlib -> libs -> project"
+	"haxe.importsSortOrder": "stdlib -> libs -> project",
+	"haxe.renameSourceFolders": ["engine/source/imaginative", "commands"],
+
+	"haxecheckstyle.sourceFolders": ["engine/source/imaginative", "commands"]
 }

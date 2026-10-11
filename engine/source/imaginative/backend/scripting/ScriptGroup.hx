@@ -16,14 +16,12 @@ typedef TScriptRetCall<V> = (?V, ScriptInstance, ?V) -> V;
  * Wrapper for `TScriptRetCall`.
  */
 abstract ScriptRetCall<V>(TScriptRetCall<V>) from TScriptRetCall<V> to TScriptRetCall<V> {
-	@:from inline public static function fromV<V>(value:V):ScriptRetCall<V>
-		return cast value;
-
 	inline public function call(?cur:V, script:ScriptInstance, ?ret:V):V {
 		if (this == null) return ret ?? cur;
-		if (!Reflect.isFunction(this)) return cast ret ?? cast this ?? cast cur;
+		if (!Reflect.isFunction(this)) return ret ?? cast this ?? cast cur;
 		return this(cur, script, ret);
 	}
+	@:from inline public static function fromV<V>(value:V):ScriptRetCall<V> return cast value;
 }
 
 /**

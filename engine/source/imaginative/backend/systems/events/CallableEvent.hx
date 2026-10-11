@@ -1,10 +1,8 @@
 package imaginative.backend.systems.events;
 
-import flixel.util.FlxDestroyUtil;
-
 @:build(imaginative.backend.macro.CallableEventMacro.build())
 @:autoBuild(imaginative.backend.macro.CallableEventMacro.build())
-class CallableEvent implements IFlxDestroyable {
+class CallableEvent {
 	/**
 	 * If true, whatever this event does gets cancelled.
 	 */
@@ -25,14 +23,8 @@ class CallableEvent implements IFlxDestroyable {
 	inline public function halt():Void
 		cancelled = breakLoop = true;
 
-	public function new() {
-		_log('Initalized ${toString()}');
-	}
-
-	public function _recycle():Void
-		cancelled = breakLoop = false;
-
-	public function destroy():Void {}
+	public function new() _log('Initalized ${toString()}');
+	public function _recycle():Void cancelled = breakLoop = false;
 
 	public function toString():String
 		return 'CallableEvent(cancelled: $cancelled, breakLoop: $breakLoop)';

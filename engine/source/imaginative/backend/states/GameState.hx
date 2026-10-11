@@ -55,10 +55,9 @@ class GameState extends FlxSubState implements IConductorReactive {
 		persistentUpdate = true;
 	}
 
-	public var scripts:Null<ScriptGroup>;
+	public var scripts:ScriptGroup;
 	function loadScripting():Void { // in-case you wanna override this or smth
-		if (!allowScripts) return;
-		add(scripts = new ScriptGroup(this));
+		add(scripts = new ScriptGroup(this)); if (!allowScripts) return;
 		for (script in Script.multiCreate('top:data/states/global')) scripts.add(script);
 		for (script in Script.multiCreate('top:data/states/$id')) scripts.add(script);
 		scripts.load();
@@ -71,10 +70,9 @@ class GameState extends FlxSubState implements IConductorReactive {
 	 * @param def If the function return is null, it returns this.
 	 * @return The functions return value.
 	 */
-	inline public function scriptCall<R>(callback:String, ?arguments:Array<Any>, ?def:ScriptRetCall<R>):Null<R> {
-		if (allowScripts && scripts != null)
-			return scripts.call(callback, arguments, def);
-		return def.call(scripts);
+	public function scriptCall<R>(callback:String, ?arguments:Array<Any>, ?def:ScriptRetCall<R>):Null<R> {
+		if (!allowScripts) return def.call(scripts);
+		return scripts.call(callback, arguments, def);
 	}
 	/**
 	 * Runs an event call throughout the state scripts.
@@ -83,10 +81,9 @@ class GameState extends FlxSubState implements IConductorReactive {
 	 * @param parentOverride What the parent should temporally be when called.
 	 * @return The event that was called.
 	 */
-	inline public function eventCall<E:CallableEvent>(callback:String, event:E, ?parentOverride:Any):E {
-		if (allowScripts && scripts != null)
-			return scripts.event(callback, event, parentOverride);
-		return event;
+	public function eventCall<E:CallableEvent>(callback:String, event:E, ?parentOverride:Any):E {
+		if (!allowScripts) return event;
+		return scripts.event(callback, event, parentOverride);
 	}
 
 	public var stateCamera:FlxCamera;

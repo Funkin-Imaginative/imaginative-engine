@@ -111,7 +111,7 @@ class Script extends flixel.FlxBasic { // I would be doing "implements IFlxDestr
 	 */
 	public static function multiCreate(path:ModPath, type:ScriptType = TypeUnknown, includeAllActiveModules:Bool = false):Array<Script> {
 		path.applyExt();
-		var results = ArrayUtil.recycle();
+		var results = ArrayUtil.recycle(true);
 		#if Scripting
 			#if Modding
 			var _exts = switch (type) {

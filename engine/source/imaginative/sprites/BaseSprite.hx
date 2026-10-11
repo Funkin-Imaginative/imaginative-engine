@@ -51,6 +51,16 @@ enum abstract AnimationContext(String) {
 	}
 }
 
+abstract SpriteInitFunc(SpriteInitEvent -> Void) from SpriteInitEvent -> Void {
+	inline public function call(event:SpriteInitEvent):Void {
+		if (Reflect.isFunction(this)) this(event);
+		if (this is String) event.spriteAsset = cast this;
+	}
+
+	@:from inline public static function fromString(value:String):SpriteInitFunc return cast value;
+	@:from inline public static function fromModPath(value:ModPath):SpriteInitFunc return cast value;
+}
+
 class BaseSprite extends #if Animate_Atlas animate.FlxAnimate #else flixel.FlxSprite #end {
 	/**
 	 * If true, a *lot*, of automated shit won't work.
@@ -171,26 +181,26 @@ class BaseSprite extends #if Animate_Atlas animate.FlxAnimate #else flixel.FlxSp
 			scriptsLoaded = true;
 		}
 
-		var locations:Array<ModPath> = ['top:global']; // recycle an array?
+		var locations:Array<ModPath> = ['top:data/sprites/global']; // recycle an array?
 		if (!paths.isBlank()) locations.merge(paths);
 		paths.putWeak();
 
 		for (sprite in locations)
-			for (script in Script.multiCreate('data/sprites' + sprite))
+			for (script in Script.multiCreate(sprite))
 				scripts.add(script);
 
 		locations.put();
 		scripts.load();
 	}
 
-	public function new(x:Float = 0, y:Float = 0, ?sprite:ModPath, ?scripts:Array<ModPath> #if Animate_Atlas, ?settings:animate.FlxAnimateFrames.FlxAnimateSettings #end) {
+	public function new(x:Float = 0, y:Float = 0, ?initFunc:SpriteInitFunc) {
 		super(x, y);
-		loadScripting(scripts);
-		_create(); this.scripts.call('onCreate');
+		var event = SpriteInitEvent.recycle('data/sprites'); initFunc.call(event);
+		loadScripting(event.scriptPaths); scripts.event('onInitEvent', event);
 
-		if (sprite != null) loadTexture(sprite, #if Animate_Atlas settings, #end true);
-
-		_createPost(); this.scripts.call('onCreatePost');
+		_create(); scripts.call('onCreate');
+		if (event.spriteAsset != null) loadTexture(event.spriteAsset, #if Animate_Atlas event.atlasSettings, #end true);
+		_createPost(); scripts.call('onCreatePost');
 	}
 	// FOR INTERNAL USE ONLY!! Override these to ensure script call order.
 	function _create():Void {}
@@ -327,6 +337,7 @@ class BaseSprite extends #if Animate_Atlas animate.FlxAnimate #else flixel.FlxSp
 			if (animation.exists(_name)) {
 				animation.play(_name, event.force, event.reverse, event.frame);
 				animationContext = event.context;
+				scripts.event('onPlayAnimation', event);
 				break;
 			}
 			if (debugMode || !event.doSuffixChecks)

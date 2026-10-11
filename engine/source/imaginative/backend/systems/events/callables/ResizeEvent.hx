@@ -13,7 +13,7 @@ class ResizeEvent extends CallableEvent {
 	/**
 	 * The old width. **Can be null.**
 	 */
-	 public var oldWidth:Null<Int> = null;
+	public var oldWidth:Null<Int> = null;
 	/**
 	 * The old height. **Can be null.**
 	 */

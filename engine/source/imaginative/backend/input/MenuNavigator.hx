@@ -157,7 +157,7 @@ abstract class BaseMenuNavigator extends FlxTypedGroup<MenuNavItem> {
 	 * @return If true, the mouse is overlapping with the given item.
 	 */
 	public dynamic function overlapsCheck(item:MenuNavItem):Bool
-		return FlxG.mouse.overlaps(item);
+		return Game.mouse.overlaps(item);
 
 	/**
 	 * The default cooldown time in seconds.
@@ -281,11 +281,11 @@ class MenuNavigator extends BaseMenuNavigator {
 			}
 		}
 		if (allowCursor) {
-			if (FlxG.mouse.wheel != 0) {
-				changeSelection(selMult() * -1 * FlxG.mouse.wheel);
+			if (Game.mouse.wheel != 0) {
+				changeSelection(selMult() * -1 * Game.mouse.wheel);
 				currentView = currentValue;
 			}
-			if (FlxG.mouse.justMoved)
+			if (Game.mouse.isMoving)
 				for (i => item in members)
 					if (item.canSelect && overlapsCheck(item))
 						changeSelection(i, true);
@@ -309,7 +309,7 @@ class MenuNavigator extends BaseMenuNavigator {
 			}
 		}
 
-		if ((allowInput && Controls.global.accept) || (allowCursor && FlxG.mouse.justPressed && (currentValue == -1 ? true : overlapsCheck(members[currentValue])))) {
+		if ((allowInput && Controls.global.accept) || (allowCursor && Game.mouse.justPressed && (currentValue == -1 ? true : overlapsCheck(members[currentValue])))) {
 			if (currentView != currentValue)
 				currentView = currentValue;
 			else selectCurrent();
@@ -324,7 +324,7 @@ class MenuNavigator extends BaseMenuNavigator {
 		return FlxMath.wrap(curAmount + amount, 0, length - 1);
 
 	@:unreflective var _stopSound:Bool = true;
-	public final onSelectionChange:FlxTypedSignal<SelectionChangeEvent->Void> = new FlxTypedSignal<SelectionChangeEvent->Void>();
+	public final onSelectionChange:FlxTypedSignal<SelectionChangeEvent -> Void> = new FlxTypedSignal<SelectionChangeEvent -> Void>();
 	public function changeSelection(amount:Int = 0, pureSelect:Bool = false):Void {
 		if (isEmpty()) {
 			currentValue = -1;

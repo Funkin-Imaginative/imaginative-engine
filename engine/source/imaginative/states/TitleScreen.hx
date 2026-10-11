@@ -25,12 +25,16 @@ class TitleScreen extends GameState {
 	var introImage:BaseSprite;
 	var introText:FlxText;
 
-	static var introTextData:IntroTextData;
+	static var introTextData(get, never):Null<IntroTextData>;
+	@:noCompletion inline static function get_introTextData():Null<IntroTextData>
+		return Assets.json('data/introText', CacheAsset, true);
 
 	@:unreflective static final _intro_entry:Array<String> = [];
 	static function getIntroEntry(reload:Bool = false):Array<String> {
-		if (reload || _intro_entry.isBlank())
-			_intro_entry.set(FlxG.random.getObject(introTextData.texts));
+		if (reload || _intro_entry.isBlank()) {
+			_intro_entry.clear();
+			_intro_entry.merge(FlxG.random.getObject(introTextData.texts));
+		}
 		return _intro_entry;
 	}
 
@@ -42,6 +46,7 @@ class TitleScreen extends GameState {
 
 	override function onReset():Void {
 		played_intro = false;
+		getIntroEntry(true);
 		super.onReset();
 	}
 
@@ -83,7 +88,6 @@ class TitleScreen extends GameState {
 		introText.screenCenter(X);
 		add(introText);
 
-		introTextData = Assets.json('data/introText', true);
 		for (data in introTextData.intro)
 			if (data.image.isFile) // preloads all images
 				Assets.image(data.image, true);

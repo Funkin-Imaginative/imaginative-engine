@@ -128,7 +128,6 @@ class PlayerInput extends UserInput {
 	}
 }
 
-
 class Controls {
 	extern inline static function init():Void {
 		// TODO: Save data junk.

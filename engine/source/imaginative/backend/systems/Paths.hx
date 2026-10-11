@@ -576,6 +576,7 @@ class Paths {
 	 */
 	public static function readFolder(path:ModPath, ?setExts:Array<String>, recursive:Bool = false):Array<FileModPath> {
 		var files:Array<FileModPath> = ArrayUtil.recycle();
+		path.applyExt();
 		if (path.isFolder) {
 			for (item in FileSystem.readDirectory(path.format())) {
 				var data:FileModPath = new FileModPath(FilePath.addTrailingSlash(path.path) + item, path.type, path.moduleId);
@@ -621,7 +622,7 @@ class Paths {
 	/**
 	 * Checks if an image as a sheet extention.
 	 * @param path The mod path.
-	 * @return If true,
+	 * @return If true, the spritesheet exists.
 	 */
 	inline public static function spritesheetExists(path:ModPath):Bool
 		return image(path).isFile && spritesheet(path).isFile;

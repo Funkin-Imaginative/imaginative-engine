@@ -32,35 +32,50 @@ class LaunchScreen extends GameState {
 				cpp.vm.Gc.compact();
 				Game.state.preCreate();
 			});
-			/* FlxG.signals.preStateSwitch.add(() -> @:privateAccess {
-				function getName(lol:flixel.util.typeLimit.NextState):String {
+			FlxG.signals.preStateSwitch.add(() -> @:privateAccess {
+				function getName(lol:flixel.util.typeLimit.NextState):Null<String> {
 					return switch (lol) {
-						case _class if (_class is Class):
-							// trace('class');
-							var lol = Type.getClassName(cast _class);
-							lol.getSlice('.', -1);
-						case state if (state is GameState):
-							// trace('game');
-							cast(state, GameState).id;
-						case state if (state is flixel.FlxState):
-							// trace('base');
-							var lol = Type.getClassName(Type.getClass(state));
-							lol.getSlice('.', -1);
-						case func if (Reflect.isFunction(func)):
-							// trace('func');
-							getName(cast func.getConstructor()());
+						case cls if (cls is Class): cls.getClassName(false);
+						case state if (state is GameState): cast(state, GameState).id;
+						case state if (state is flixel.FlxState): state.getClassName(false);
+						case func if (Reflect.isFunction(func)): getName(cast func.getConstructor()());
 						default: null;
 					}
 				}
 
-				var stateName = getName(FlxG.game._nextState);
-				trace(stateName);
-				if (Game.stateRedirects.exists(stateName)) {
+				var stateName = getName(FlxG.game._nextState); _log('State: "$stateName"', DebugMessage);
+				/* if (stateName != 'LaunchScreen' && Game.stateRedirects.exists(stateName)) {
 					var classResolve = Type.resolveClass(Game.stateRedirects.get(stateName));
 					FlxG.game._nextState = classResolve != null ? Type.createInstance(classResolve, ArrayUtil.recycle()) : new ModdedState(Game.stateRedirects.get(stateName));
+				} */
+			});
+			FlxG.signals.postUpdate.add(() -> {
+				if (Controls.global.resetState) {
+					try {
+						_log('Reseting state...');
+						Game.resetState();
+						_log('State reset successful!');
+					} catch(error:haxe.Exception)
+						_log('State reset failed. (error: "${error.message}")', ErrorMessage);
 				}
-			}); */
-		}
+				if (Controls.global.quickState) {
+					try {
+						_log('Heading to the MainMenu...');
+						Game.switchState(() -> new imaginative.states.menus.MainMenu());
+						_log('Successfully entered the MainMenu!');
+					} catch(error:haxe.Exception)
+						_log('Failed to enter the MainMenu. (error: "${error.message}")', ErrorMessage);
+				}
+				if (Controls.global.reloadGame) {
+					try {
+						_log('Reloading the game...');
+						Game.reload();
+						_log('Reload successfully!');
+					} catch(error:haxe.Exception)
+						_log('Reload failed. (error: "${error.message}")', ErrorMessage);
+				}
+			});
+		} else Assets.clearContent();
 		super.create();
 		#if Updateable
 		if (Game.updateAvailable) {
@@ -90,7 +105,7 @@ class LaunchScreen extends GameState {
 			FlxG.sound.play(Assets.sound('gameovers/retry', true, true), 0.5, () -> {
 				Game.switchState(() -> new TitleScreen());
 			});
-		} // else
+		} else Game.switchState(() -> new TitleScreen());
 	}
 }
 

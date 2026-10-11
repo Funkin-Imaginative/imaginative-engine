@@ -43,7 +43,7 @@ class CallableEventMacro {
 			if (!field.access.contains(APublic))
 				hidden = true;
 
-			switch(field.kind) {
+			switch (field.kind) {
 				case FVar(type, expr):
 					(hidden ? hiddenValues : values).push({
 						name: field.name,
@@ -80,7 +80,7 @@ class CallableEventMacro {
 
 		classFields.push(funcField);
 
-		switch(func.expr.expr) {
+		switch (func.expr.expr) {
 			case EBlock(exprs):
 				exprs.push(macro if (instance == null) instance = ${Context.parse('new $classPath()', Context.currentPos())});
 				exprs.push(macro instance._recycle());

@@ -2,7 +2,7 @@ package imaginative.backend.systems.events.callables.menus;
 
 class MenuSFXEvent extends CallableEvent {
 	/**
-	 * If true the menu sound effect will play.
+	 * If true, the menu sound effect will play.
 	 */
 	@:hidden public var playSFX:Bool = true;
 	/**

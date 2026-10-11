@@ -46,53 +46,88 @@ class Assets {
 	static var content:Map<String, Dynamic> = new Map<String, Dynamic>();
 	static var persistenceList:Map<String, PersistenceType> = new Map<String, PersistenceType>();
 
-	inline public static function addContent(path:String, data:Dynamic, cacheType:CacheType, persistenceType:PersistenceType):Void {
-		var wasCached:Bool = false;
+	static function addContent(path:String, data:Dynamic, cacheType:CacheType, persistenceType:PersistenceType):Void {
+		static var _wasCached:Bool = false;
 		switch (cacheType) {
 			case IgnoreCache:
 				// do nothing lol
+				_wasCached = false;
 			case OverrideCache:
 				content.set(path, data);
-				wasCached = true;
+				_wasCached = true;
 			case CacheAsset:
 				if (!content.exists(path))
 					content.set(path, data);
-				wasCached = true;
+				_wasCached = true;
 		}
-		if (wasCached)
+		if (_wasCached) {
+			if (data is FlxGraphic)
+				cast(data, FlxGraphic).incrementUseCount();
 			persistenceList.set(path, persistenceType);
+		}
 	}
 	inline public static function getContent(path:String):Dynamic return content.get(path);
 	inline public static function contentExists(path:String):Bool return content.exists(path);
-	inline public static function removeContent(path:String, ignorePersistent:Bool = false):Void {
+	static function removeContent(path:String, ignorePersistent:Bool = false):Void {
 		if (persistenceList.exists(path)) {
+			static var _wasRemoved:Bool = false;
 			var persistenceType:PersistenceType = persistenceList.get(path);
 			switch (persistenceType) {
 				case IsIndestructible:
 					// do nothing lol
+					_wasRemoved = false;
 				case IsPersistent:
 					if (ignorePersistent) {
 						content.remove(path);
 						persistenceList.remove(path);
+						_wasRemoved = true;
 					}
 				case IsVulnerable:
 					content.remove(path);
 					persistenceList.remove(path);
+					_wasRemoved = true;
+			}
+			if (_wasRemoved) {
+				var data = content.get(path);
+				if (data is FlxGraphic)
+					cast(data, FlxGraphic).decrementUseCount();
 			}
 		}
+	}
+	public static function clearContent(?filter:(String, Dynamic) -> Bool):Void {
+		_log('[Assets] Clearing content.');
+		static var _content:Array<String> = [];
+		for (path => data in content) {
+			if (!persistenceList.exists(path))
+				persistenceList.set(path, IsVulnerable);
+			var persistenceType = persistenceList.get(path);
+			switch (persistenceType) {
+				case IsIndestructible:
+					// do nothing lol
+				default:
+					if (filter == null ? true : filter(path, data)) {
+						removeContent(path, true);
+						@SuppressWarnings('checkstyle:OperatorWhitespace')
+						if (data is FlxGraphic && !cast(data, FlxGraphic).isDestroyed)
+							addContent(path, data, CacheAsset, persistenceType);
+						else _content.push(path);
+					}
+			}
+		}
+		_log('[Assets] Cleared ${_content.cleanDisplayList()}.');
+		_content.clear();
 	}
 
 	static final fallbackImage:String = 'flixel/images/logo/default.png';
 	static final fallbackSound:String = 'flixel/sounds/beep.ogg';
 	extern inline static function init():Void {
 		_log('Initializing Assets');
-		FlxG.bitmap.add(FlxG.assets.getBitmapData(fallbackImage)).persist = true;
-		FlxG.assets.getSound(fallbackSound);
+		FlxG.bitmap.add(FlxG.assets.getBitmapData(fallbackImage, true)).persist = true;
+		FlxG.sound.play(FlxG.assets.getSound(fallbackSound, true), 0.001).persist = true;
 
 		inline function _readFolder(path:String, recursive:Bool):Array<String> {
 			var data = Paths.readFolder('root:$path', recursive);
-			var result:Array<String> = [for (lol in data) lol.format()];
-			data.put();
+			var result:Array<String> = [for (lol in data) lol.format()]; data.put();
 			return result;
 		}
 
@@ -117,31 +152,32 @@ class Assets {
 	 * @param displayWarning If true, a warning message will appear.
 	 * @return Raw text.
 	 */
-	inline public static function text(path:ModPath, cacheType:CacheType = IgnoreCache, displayWarning:Bool = false, ?infos:haxe.PosInfos):String {
+	public static function text(path:ModPath, cacheType:CacheType = IgnoreCache, displayWarning:Bool = false, ?infos:haxe.PosInfos):String {
 		var finalPath:String = path.format();
-		if (cacheType == CacheAsset && contentExists(finalPath)) return getContent(path);
+		if (cacheType == CacheAsset && contentExists(finalPath)) return getContent(finalPath);
 		var asset:String = '';
 		try {
-			asset = path.isFile ? File.getContent(finalPath) : '';
+			asset = path.isFile ? FlxG.assets.getText(finalPath, false).ifBlankReplace(File.getContent(finalPath)) : '';
 			if (!asset.isBlank()) addContent(finalPath, asset, cacheType, IsVulnerable);
-			else if (displayWarning) log('Couldn\'t find "$finalPath".', WarningMessage, infos);
+			else if (_warned = displayWarning) log('Couldn\'t find "$finalPath".', WarningMessage, infos);
 		} catch(error:haxe.Exception)
-			if (displayWarning) log('An error occurred when parsing the file. (path: "$finalPath", error: "${error.message}")', ErrorMessage, infos);
+			if (_warned = displayWarning) log('An error occurred when parsing the file. (path: "$finalPath", error: "${error.message}")', ErrorMessage, infos);
 		return asset.ifBlankReplace('');
 	}
+	@:unreflective static var _warned:Bool = false;
 
 	/**
 	 * Parses a json file from a path and returns its contents.
 	 * @param path The mod path.
 	 * @param cacheType The cache type.
 	 * @param displayWarning If true, a warning message will appear.
-	 * @return A dynamic structure. **Can be null,** especially if it doesn't exist.
+	 * @return A dynamic structure. **Can be null**, especially if it doesn't exist.
 	 */
-	inline public static function json(path:ModPath, cacheType:CacheType = IgnoreCache, displayWarning:Bool = false, ?infos:haxe.PosInfos):Null<Dynamic> {
+	public static function json(path:ModPath, cacheType:CacheType = IgnoreCache, displayWarning:Bool = false, ?infos:haxe.PosInfos):Null<Dynamic> {
 		var _path:ModPath = Paths.json(path);
 		var finalPath:String = _path.format();
-		if (cacheType == CacheAsset && contentExists(finalPath)) return getContent(path);
-		var data:Dynamic = rawJson(text(_path), _path, displayWarning, infos);
+		if (cacheType == CacheAsset && contentExists(finalPath)) return getContent(finalPath);
+		var data:Dynamic = rawJson(text(_path, displayWarning, infos), _path, !_warned && displayWarning, infos); // not doing ROOT on purpose
 		if (data != null) addContent(finalPath, data, cacheType, IsVulnerable);
 		return data;
 	}
@@ -152,7 +188,7 @@ class Assets {
 	 * @param displayWarning If true, a warning message will appear.
 	 * @return A dynamic structure. **Can be null.**
 	 */
-	inline public static function rawJson(contents:String, ?path:ModPath, displayWarning:Bool = false, ?infos:haxe.PosInfos):Null<Dynamic> {
+	public static function rawJson(contents:String, ?path:ModPath, displayWarning:Bool = false, ?infos:haxe.PosInfos):Null<Dynamic> {
 		var data:Dynamic = null;
 		try {
 			data = haxe.Json.parse(contents);
@@ -183,10 +219,9 @@ class Assets {
 		if (cacheType == CacheAsset && contentExists(finalPath))
 			return getContent(finalPath);
 
-		var bitmap:BitmapData = FlxG.assets.exists(finalPath, IMAGE) ? FlxG.assets.getBitmapData(finalPath) : BitmapData.fromFile(finalPath);
+		var bitmap:BitmapData = _path.exists ? BitmapData.fromFile(finalPath) : FlxG.assets.getBitmapData(finalPath);
 		var asset:FlxGraphic = FlxG.bitmap.add(bitmap, finalPath);
 		addContent(finalPath, asset, cacheType, persistenceType);
-		asset.incrementUseCount();
 		return asset;
 	}
 
@@ -205,7 +240,7 @@ class Assets {
 		if (cacheType == CacheAsset && contentExists(finalPath))
 			return getContent(finalPath);
 
-		var asset:Sound = FlxG.assets.exists(finalPath, SOUND) ? (streamIt && FlxG.assets.canStreamSound(finalPath) ? FlxG.assets.streamSound(finalPath) : FlxG.assets.getSound(finalPath)) : Sound.fromFile(finalPath);
+		var asset:Sound = streamIt && FlxG.assets.canStreamSound(finalPath) ? FlxG.assets.streamSound(finalPath) : (path.exists ? Sound.fromFile(finalPath) : FlxG.assets.getSound(finalPath));
 		addContent(finalPath, asset, cacheType, persistenceType);
 		return asset;
 	}
@@ -219,8 +254,8 @@ class Assets {
 	 * @param displayWarning If true, a warning message will appear.
 	 * @return The audio data.
 	 */
-	inline public static function audio(path:ModPath, beepWhenNull:Bool = true, streamIt:Bool = false, cacheType:CacheType = CacheAsset, persistenceType:PersistenceType = IsVulnerable, displayWarning:Bool = false):Sound
-		return _audio(Paths.audio(path), beepWhenNull, streamIt, cacheType, persistenceType, displayWarning);
+	inline public static function audio(path:ModPath, beepWhenNull:Bool = true, streamIt:Bool = false, cacheType:CacheType = CacheAsset, persistenceType:PersistenceType = IsVulnerable, displayWarning:Bool = false, ?infos:haxe.PosInfos):Sound
+		return _audio(Paths.audio(path), beepWhenNull, streamIt, cacheType, persistenceType, displayWarning, infos);
 
 	/**
 	 * Gets the data of an instrumental file from "`../data/songs/`".
@@ -230,8 +265,8 @@ class Assets {
 	 * @param displayWarning If true, a warning message will appear.
 	 * @return The instrumental audio data.
 	 */
-	inline public static function inst(song:ModPath, ?variant:String, reloadCache:Bool = false, displayWarning:Bool = false):Sound
-		return _audio(Paths.inst(song, variant), true, true, reloadCache ? OverrideCache : CacheAsset, IsVulnerable, displayWarning);
+	inline public static function inst(song:ModPath, ?variant:String, reloadCache:Bool = false, displayWarning:Bool = false, ?infos:haxe.PosInfos):Sound
+		return _audio(Paths.inst(song, variant), true, true, reloadCache ? OverrideCache : CacheAsset, IsVulnerable, displayWarning, infos);
 	/**
 	 * Gets the data of a vocal file from "`../data/songs/`".
 	 * @param song The song id.
@@ -241,8 +276,8 @@ class Assets {
 	 * @param displayWarning If true, a warning message will appear.
 	 * @return The vocal audio data.
 	 */
-	inline public static function vocal(song:ModPath, ?suffix:String, ?variant:String, reloadCache:Bool = false, displayWarning:Bool = false):Sound
-		return _audio(Paths.vocal(song, suffix, variant), false, true, reloadCache ? OverrideCache : CacheAsset, IsVulnerable, displayWarning);
+	inline public static function vocal(song:ModPath, ?suffix:String, ?variant:String, reloadCache:Bool = false, displayWarning:Bool = false, ?infos:haxe.PosInfos):Sound
+		return _audio(Paths.vocal(song, suffix, variant), false, true, reloadCache ? OverrideCache : CacheAsset, IsVulnerable, displayWarning, infos);
 
 	/**
 	 * Gets the data of an audio file from "`../music`".
@@ -252,8 +287,8 @@ class Assets {
 	 * @param displayWarning If true, a warning message will appear.
 	 * @return The music audio data.
 	 */
-	inline public static function music(path:ModPath, cacheType:CacheType = CacheAsset, persistenceType:PersistenceType = IsVulnerable, displayWarning:Bool = false):Sound
-		return _audio(Paths.music(path), true, true, cacheType, persistenceType, displayWarning);
+	inline public static function music(path:ModPath, cacheType:CacheType = CacheAsset, persistenceType:PersistenceType = IsVulnerable, displayWarning:Bool = false, ?infos:haxe.PosInfos):Sound
+		return _audio(Paths.music(path), true, true, cacheType, persistenceType, displayWarning, infos);
 	/**
 	 * Gets the data of an audio file from "`../sounds`".
 	 * @param path The mod path.
@@ -264,8 +299,8 @@ class Assets {
 	 * @param displayWarning If true, a warning message will appear.
 	 * @return The sound audio data.
 	 */
-	inline public static function sound(path:ModPath, beepWhenNull:Bool = true, streamIt:Bool = false, cacheType:CacheType = CacheAsset, persistenceType:PersistenceType = IsVulnerable, displayWarning:Bool = false):Sound
-		return _audio(Paths.sound(path), beepWhenNull, streamIt, cacheType, persistenceType, displayWarning);
+	inline public static function sound(path:ModPath, beepWhenNull:Bool = true, streamIt:Bool = false, cacheType:CacheType = CacheAsset, persistenceType:PersistenceType = IsVulnerable, displayWarning:Bool = false, ?infos:haxe.PosInfos):Sound
+		return _audio(Paths.sound(path), beepWhenNull, streamIt, cacheType, persistenceType, displayWarning, infos);
 
 	// im so funny uwu
 	#if Animate_Atlas

@@ -1,0 +1,11 @@
+{
+	"recommendations": [
+		"vitabletech.ansi-spectrum",
+		"streetsidesoftware.code-spell-checker",
+		"mikekscholz.color-highlight-fork",
+		"vshaxe.haxe-extension-pack",
+		"shd101wyy.markdown-preview-enhanced",
+		"esbenp.prettier-vscode",
+		"openfl.lime-vscode-extension"
+	]
+}

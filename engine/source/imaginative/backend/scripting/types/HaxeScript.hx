@@ -5,19 +5,21 @@ import hxscript.Config as HxConfig;
 import hxscript.Environment;
 
 private class HxScript extends hxscript.Script {
-	var _parent:HaxeScript;
-	public function new(parent:HaxeScript, string:String, name:String = 'hscript', ?environment:Environment) {
-		_parent = parent;
+	public function new(string:String, name:String = 'hscript', ?environment:Environment) {
 		super(string, name, environment);
 		interp.parent = null;
 	}
 	override function call(variable:String, ?args:Array<Dynamic>):Any {
 		if (interp == null) throw 'Interpreter is uninitialized';
-		var fun = (variables.get(variable) ?? interp.getLocal(variable));
-		if (!Reflect.isFunction(fun)) return null;
+
+		var func = null;
+		try { func = variables.get(variable) ?? interp.getLocal(variable); }
+		catch(error:haxe.Exception) return null; // _log('[HxScript] ${error.message}', ErrorMessage);
+
+		if (!Reflect.isFunction(func)) return null;
 		try {
 			args ??= ArrayUtil.recycle();
-			var result = Reflect.callMethod(interp, fun, args);
+			var result = Reflect.callMethod(interp, func, args);
 			args.put();
 			return result;
 		} catch(error:haxe.Exception) log(error.message, ErrorMessage, FromHaxe, interp.posInfos());
@@ -26,9 +28,11 @@ private class HxScript extends hxscript.Script {
 
 	extern inline function addImport(cls:Class<Any>, ?as:String):Void
 		interp.imports.set(as ?? cls.getClassName(false), cls);
-	extern inline function addUsing(cls:Class<Any>):Void
+	extern inline function addUsing(cls:Class<Any>):Void {
 		if (!interp.usings.contains(cls))
 			interp.usings.push(cls);
+		addImport(cls);
+	}
 	override function setDefaults():Void {
 		interp.setDefaults();
 		// parser.preprocessorValues.set();
@@ -60,6 +64,12 @@ private class ImagInterp extends hxscript.runtime.Interp {
 		if (variables != null) variables.set('this', parent = value);
 		return super.set_parent(value);
 	}
+	override function setDefaults(wipe:Bool = true, includeConfig:Bool = true):Void @:privateAccess {
+		super.setDefaults(wipe, includeConfig);
+		variables.set('trace', Reflect.makeVarArgs(vars -> log(vars.toStringAdvanced(false), FromHaxe, posInfos())));
+		variables.set('log', (value:Dynamic, level:LogLevel = LogMessage) -> log(value, level, FromHaxe, posInfos()));
+		variables.set('_log', (value:Dynamic, level:LogLevel = DebugMessage) -> _log(value, level, FromHaxe));
+	}
 }
 
 /**
@@ -86,9 +96,9 @@ class HaxeScript extends Script {
 
 	var internal_script:HxScript;
 	override function setup():Void {
-		internal_script = new HxScript(this, Assets.text(filePath.toString()), filePath.format(), new Environment());
-		internal_script.onParsingError = error -> _log(error, ErrorMessage);
-		internal_script.onProgramError = error -> _log(error, ErrorMessage);
+		internal_script = new HxScript(Assets.text(filePath.toString()), filePath.format(), new Environment());
+		internal_script.onParsingError = error -> _log('[HaxeScript] An error occurred trying to parse this script. (path: "${internal_script.name}", error: "${error.message}")', ErrorMessage);
+		internal_script.onProgramError = error -> _log('[HaxeScript] An error occurred trying to start the program. (path: "${internal_script.name}", error: "${error.message}")', ErrorMessage);
 		super.setup();
 	}
 

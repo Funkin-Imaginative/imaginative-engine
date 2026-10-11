@@ -40,7 +40,6 @@ class Project extends HXProject {
 	static final engineVersion:Version = '0.0.0';
 	/**
 	 * The starting window title.
-	 * Although slightly mananaged by the `FlxWindow` class I'm still having this here.
 	 */
 	inline static final windowTitle:String = 'Friday Night Funkin\': Imaginative Engine';
 	/**
@@ -361,7 +360,7 @@ class Project extends HXProject {
 	/**
 	 * Checks if a haxedef exists.
 	 * @param name The haxedef key.
-	 * @return If true the define exists.
+	 * @return If true, the define exists.
 	 */
 	extern inline public function hasHaxedef(name:String):Bool
 		return haxedefs.exists(name);
@@ -399,7 +398,7 @@ class Project extends HXProject {
 	/**
 	 * Checks if a define exists.
 	 * @param name The define key.
-	 * @return If true the define exists.
+	 * @return If true, the define exists.
 	 */
 	extern inline public function hasDefine(name:String):Bool
 		return defines.exists(name);
@@ -451,7 +450,7 @@ class Project extends HXProject {
 	 * Add an asset to the game build.
 	 * @param path The path the asset is located at.
 	 * @param rename The path the asset should be placed.
-	 * @param force If true if the game find that the file already exists then it will replace that file.
+	 * @param force If true, if the game find that the file already exists then it will replace that file.
 	 * @param library The asset library to add the asset to. `null` = "default"
 	 * @param embed Whether to embed the asset in the executable.
 	 */
@@ -463,7 +462,7 @@ class Project extends HXProject {
 	 * Add an entire path of assets to the game build.
 	 * @param path The path the assets are located at.
 	 * @param rename The path the assets should be placed.
-	 * @param force If true if the game find that the file already exists then it will replace that file.
+	 * @param force If true, if the game find that the file already exists then it will replace that file.
 	 * @param library The asset library to add the assets to. `null` = "default"
 	 * @param include An optional array to include specific asset names.
 	 * @param exclude An optional array to exclude specific asset names.

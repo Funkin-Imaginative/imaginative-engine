@@ -1,5 +1,6 @@
 import haxe.macro.Compiler;
 import flixel.FlxState;
+import imaginative.backend.input.GameMouse;
 import imaginative.backend.states.GameState;
 import thx.semver.Version;
 
@@ -55,12 +56,18 @@ class Game extends openfl.display.Sprite {
 
 		hxhardware.CPU.init();
 		addChild(new flixel.FlxGame(initialWidth, initialHeight, imaginative.states.LaunchScreen, true));
+		FlxG.mouse = new GameMouse(FlxG.mouse.cursorContainer);
 		FlxG.game.focusLostFramerate = 30;
 		FlxG.mouse.useSystemCursor = true;
 		FlxG.scaleMode = new flixel.system.scaleModes.RatioScaleMode();
 		#if !windows FlxG.stage.window.setIcon(lime.graphics.Image.fromFile('icon.png')); #end
 	}
 
+	/**
+	 * The current state.
+	 *
+	 * This is just a wrapper for "FlxG.state".
+	 */
 	public static var state(get, never):GameState;
 	@:noCompletion inline static function get_state():GameState {
 		if (FlxG.state is GameState)
@@ -68,14 +75,26 @@ class Game extends openfl.display.Sprite {
 		return null;
 	}
 
+	/**
+	 * The mouse cursor.
+	 *
+	 * Will soon be more than just a wrapper for "FlxG.mouse".
+	 */
+	public static var mouse(get, never):GameMouse;
+	@:noCompletion inline static function get_mouse():GameMouse {
+		if (FlxG.mouse is GameMouse)
+			return cast FlxG.mouse;
+		return null;
+	}
+
 	public static function switchState(nextState:() -> GameState):Void {
 		inline function stateCheck(oldState:FlxState, nextState:() -> GameState):FlxState {
-			var newState:FlxState = nextState();
+			var newState:GameState = nextState();
 			if (oldState is GameState && newState is GameState) {
 				var oldConductor:Conductor = cast(oldState, GameState).conductor;
 				if (oldConductor == Conductor.song || oldConductor == Conductor.charter)
 					oldConductor.pause();
-				else if (oldConductor != cast(newState, GameState).conductor)
+				else if (oldConductor != newState.conductor)
 					oldConductor.stop();
 			} else if (oldState is GameState && !(newState is GameState)) {
 				var oldConductor:Conductor = cast(oldState, GameState).conductor;
@@ -104,9 +123,11 @@ class Game extends openfl.display.Sprite {
 		fullReload();
 	}
 	inline public static function fullReload():Void {
+		if (@:privateAccess !imaginative.states.LaunchScreen.game_boot || state.id == 'LaunchScreen') throw 'Cannot reload while in "LaunchScreen" state.';
 		#if Modding
 		//
 		#end
+		resetState();
 		switchState(() -> new imaginative.states.LaunchScreen());
 	}
 }

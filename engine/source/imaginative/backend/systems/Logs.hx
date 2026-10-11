@@ -3,7 +3,7 @@ package imaginative.backend.systems;
 import haxe.Log;
 import haxe.PosInfos;
 
-// Make this work more like FlxColor in the future.
+// TODO: Make this work more like FlxColor in the future.
 enum abstract AnsiColor(String) from String to String {
 	var RESET = '\033[0m';
 	var WHITE = '\033[38;2;255;255;255m';
@@ -87,24 +87,30 @@ class Logs {
 
 		var info:String = infos == null ? null : '${infos.fileName}:${infos.lineNumber}';
 		var who:String = switch (from) {
-			case FromSource: '<gray>Source';
-			#if Scripting.Haxe case FromHaxe: '<orange>Haxe Script'; #end
-			#if Scripting.Lua case FromLua: '<blue>Lua Script'; #end
-			default: '<red>Unknown';
+			case FromSource: 'Source';
+			#if Scripting.Haxe case FromHaxe: 'Haxe Script'; #end
+			#if Scripting.Lua case FromLua: 'Lua Script'; #end
+			default: 'Unknown';
+		}
+		var whoColor:AnsiColor = switch (from) {
+			case FromSource: GRAY;
+			#if Scripting.Haxe case FromHaxe: ORANGE; #end
+			#if Scripting.Lua case FromLua: BLUE; #end
+			default: RED;
 		}
 
 		var message:String = value.toStringAdvanced();
 		if (infos != null && !infos.customParams.isBlank())
 			message += infos.customParams.toStringAdvanced();
 
-		return AnsiColor.format('$color$log <reset>~ ${info.isBlank() ? '' : '$info:'}$color[$who$color]<reset>: $message');
+		return AnsiColor.format('$color$log <reset>~ ${info.isBlank() ? '' : '$info:'}$whoColor[<reset>$who$whoColor]<reset>: $message');
 	}
 
 	/**
 	 * The engines special *trace* function.
 	 * @param value The information you want to pop on to the console.
 	 * @param level The level status of the message.
-	 * @param from States if script or source logged this.
+	 * @param from States if script or source logged this. TODO: Figure out autodetection.
 	 * @param infos The code position information.
 	 */
 	public static function log(value:Dynamic, level:LogLevel = LogMessage, from:LogFrom = FromSource, ?infos:PosInfos):Void {
@@ -117,7 +123,7 @@ class Logs {
 	 * It's just the "log" function but without the file and line in the print.
 	 * @param value The information you want to pop on to the console.
 	 * @param level The level status of the message.
-	 * @param from States if script or source logged this.
+	 * @param from States if script or source logged this. TODO: Figure out autodetection.
 	 */
 	public static function _log(value:Dynamic, level:LogLevel = SystemMessage, from:LogFrom = FromSource):Void {
 		#if debug

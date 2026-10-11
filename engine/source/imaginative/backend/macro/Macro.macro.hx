@@ -136,14 +136,10 @@ class Macro {
 			default:
 		}
 
-		var newScreenCenterFunc = tempClass.fields.find(field -> field.name == 'screenCenter');
-		tempClass.fields.remove(newScreenCenterFunc);
 		var screenCenterFunc = classFields.find(field -> field.name == 'screenCenter');
-		screenCenterFunc.name = newScreenCenterFunc.name;
-		screenCenterFunc.doc = newScreenCenterFunc.doc;
-		screenCenterFunc.access = newScreenCenterFunc.access;
-		screenCenterFunc.kind = newScreenCenterFunc.kind;
-		screenCenterFunc.meta = newScreenCenterFunc.meta;
+		var newScreenCenterFunc = tempClass.fields.find(field -> field.name == 'screenCenter');
+		newScreenCenterFunc.pos = screenCenterFunc.pos;
+		classFields.remove(screenCenterFunc);
 
 		return classFields.concat(tempClass.fields);
 	}
@@ -180,6 +176,24 @@ class Macro {
 					$initExpr;
 				}
 				onScreenFunc.kind = FFun(f);
+			default:
+		}
+		var emptyFrameFunc = classFields.find(field -> field.name == 'checkEmptyFrame');
+		switch (emptyFrameFunc.kind) {
+			case FFun(f):
+				f.expr = macro @:privateAccess {
+					if (_frame == null)
+						loadGraphic(imaginative.backend.systems.Assets.fallbackImage);
+					else if (graphic != null && graphic.isDestroyed) {
+						var width = this.width;
+						var height = this.height;
+						FlxG.log.error('Cannot render a destroyed graphic, the placeholder image will be used instead.');
+						loadGraphic(imaginative.backend.systems.Assets.fallbackImage);
+						this.width = width;
+						this.height = height;
+					}
+				}
+				emptyFrameFunc.kind = FFun(f);
 			default:
 		}
 
